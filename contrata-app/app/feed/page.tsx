@@ -7,7 +7,7 @@ import AdsLateral from '../components/AdsLateral';
 
 export default function FeedPage() {
   const [vagas, setVagas] = useState([]);
-  const [busca, setBusca] = useState('');
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -15,86 +15,95 @@ export default function FeedPage() {
   }, []);
 
   async function carregarFeed() {
-    setLoading(true);
-    // Busca vagas e traz info da empresa para saber se é Premium (Seção 10)
+    const { data: { session } } = await supabase.auth.getSession();
+    setUser(session?.user);
+
+    // Busca as vagas e conta curtidas/comentários (Interação Real Seção 6)
     const { data, error } = await supabase
       .from('vagas')
-      .select('*, profiles:empresa_id(user_type)') 
+      .select(`
+        *,
+        profiles:empresa_id(full_name),
+        curtidas(count),
+        comentarios(count)
+      `)
       .order('created_at', { ascending: false });
 
     if (!error) setVagas(data || []);
     setLoading(false);
   }
 
-  // Lógica de Busca em tempo real
-  const vagasFiltradas = vagas.filter(v => 
-    v.titulo.toLowerCase().includes(busca.toLowerCase()) || 
-    v.descricao.toLowerCase().includes(busca.toLowerCase())
-  );
+  // Ação de Curtir (Apenas uma por usuário - Requisito da Seção 6)
+  async function toggleCurtida(vagaId) {
+    if (!user) return alert("Faz login para interagir!");
+
+    const { data: existente } = await supabase
+      .from('curtidas')
+      .select('*')
+      .eq('vaga_id', vagaId)
+      .eq('usuario_id', user.id)
+      .single();
+
+    if (existente) {
+      await supabase.from('curtidas').delete().eq('id', existente.id);
+    } else {
+      await supabase.from('curtidas').insert({ vaga_id: vagaId, usuario_id: user.id });
+    }
+    carregarFeed();
+  }
 
   const s = {
     layout: { display: 'flex', backgroundColor: '#061224', minHeight: '100vh', color: 'white' },
-    container: { flex: 1, marginLeft: '240px', padding: '40px', display: 'flex', gap: '30px' },
-    inputBusca: { width: '100%', padding: '15px 25px', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.02)', color: 'white', fontSize: '16px', marginBottom: '30px' },
-    vagaCard: (isPremium) => ({
-      backgroundColor: isPremium ? 'rgba(59, 130, 246, 0.05)' : '#0a1a31',
-      padding: '25px',
-      borderRadius: '24px',
-      border: isPremium ? '1px solid #3b82f6' : '1px solid rgba(255,255,255,0.05)',
-      marginBottom: '20px',
-      position: 'relative'
-    }),
-    badgeDestaque: { position: 'absolute', top: '20px', right: '20px', backgroundColor: '#facc15', color: '#000', padding: '4px 10px', borderRadius: '50px', fontSize: '10px', fontWeight: '900' }
+    main: { flex: 1, marginLeft: '240px', padding: '40px', display: 'grid', gridTemplateColumns: '1fr 300px', gap: '30px' },
+    card: { backgroundColor: '#0a1a31', padding: '25px', borderRadius: '24px', marginBottom: '20px', border: '1px solid rgba(255,255,255,0.05)' },
+    btnInteracao: { background: 'rgba(255,255,255,0.03)', border: 'none', color: 'white', padding: '10px 15px', borderRadius: '10px', cursor: 'pointer', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px' }
   };
 
   return (
     <div style={s.layout}>
       <Sidebar />
-      <main style={s.container}>
-        <div style={{ flex: 1 }}>
-          <header style={{ marginBottom: '40px' }}>
-            <h1 style={{ fontSize: '32px', fontWeight: '900' }}>Oportunidades</h1>
-            <p style={{ opacity: 0.5 }}>Encontra o teu próximo passo em Ibitinga</p>
-          </header>
-
-          <input 
-            style={s.inputBusca} 
-            placeholder="🔍 Procura por cargo, empresa ou palavra-chave..." 
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-          />
-
-          {loading ? <p>A carregar vagas...</p> : (
-            vagasFiltradas.map((v, index) => (
-              <div key={v.id}>
-                {/* Inserção de Ad a cada 3 vagas (Seção 10 do Doc) */}
-                {index > 0 && index % 3 === 0 && (
-                  <div style={{ padding: '20px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '15px', textAlign: 'center', marginBottom: '20px', border: '1px dashed rgba(255,255,255,0.1)' }}>
-                    <span style={{ fontSize: '10px', opacity: 0.3 }}>ANÚNCIO PATROCINADO</span>
-                  </div>
-                )}
-
-                <div style={s.vagaCard(v.salario > 5000)}> {/* Simulação de destaque para salários altos ou premium */}
-                  {v.salario > 5000 && <span style={s.badgeDestaque}>DESTAQUE</span>}
-                  <h3 style={{ fontSize: '22px', margin: '0 0 10px 0' }}>{v.titulo}</h3>
-                  <p style={{ opacity: 0.6, fontSize: '14px', lineHeight: '1.6' }}>{v.descricao}</p>
-                  
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px' }}>
-                    <span style={{ color: '#10b981', fontWeight: 'bold' }}>
-                      {v.salario ? `R$ ${v.salario}` : 'Salário a combinar'}
-                    </span>
-                    <button style={{ backgroundColor: '#2563eb', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' }}>
-                      CANDIDATAR-SE
-                    </button>
-                  </div>
+      <main style={s.main}>
+        <section>
+          <h1 style={{ fontWeight: '900', fontSize: '32px', marginBottom: '30px' }}>Feed Principal</h1>
+          
+          {loading ? <p>Sincronizando interações...</p> : vagas.map(v => (
+            <div key={v.id} style={s.card}>
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#2563eb' }} />
+                <div>
+                  <h4 style={{ margin: 0 }}>{v.profiles?.full_name}</h4>
+                  <small style={{ opacity: 0.4 }}>Postado em {new Date(v.created_at).toLocaleDateString()}</small>
                 </div>
               </div>
-            ))
-          )}
-        </div>
 
-        <aside style={{ width: '280px' }}>
-          <AdsLateral />
+              <h2 style={{ fontSize: '20px', marginBottom: '10px' }}>{v.titulo}</h2>
+              <p style={{ opacity: 0.6, fontSize: '14px', marginBottom: '20px' }}>{v.descricao}</p>
+
+              {/* BARRA DE INTERAÇÕES (REQUISITO 6) */}
+              <div style={{ display: 'flex', gap: '15px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '15px' }}>
+                <button onClick={() => toggleCurtida(v.id)} style={s.btnInteracao}>
+                  👍 {v.curtidas?.[0]?.count || 0} Curtidas
+                </button>
+                <button style={s.btnInteracao}>
+                  💬 {v.comentarios?.[0]?.count || 0} Comentários
+                </button>
+                <button style={s.btnInteracao} onClick={() => alert("Link de compartilhamento copiado!")}>
+                  🚀 Partilhar
+                </button>
+              </div>
+            </div>
+          ))}
+        </section>
+
+        <aside>
+          <div style={{ position: 'sticky', top: '40px' }}>
+            <AdsLateral />
+            {/* Seção de Sugestões da Lateral (Requisito 6) */}
+            <div style={{ ...s.card, marginTop: '20px' }}>
+              <h4 style={{ fontSize: '13px', color: '#3b82f6', marginBottom: '15px' }}>SUGESTÕES PARA VOCÊ</h4>
+              <p style={{ fontSize: '12px', opacity: 0.5 }}>Novos perfis e empresas de Ibitinga em breve aqui.</p>
+            </div>
+          </div>
         </aside>
       </main>
     </div>
