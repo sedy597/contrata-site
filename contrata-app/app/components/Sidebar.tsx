@@ -12,7 +12,6 @@ export default function Sidebar() {
   const [mostrarModal, setMostrarModal] = useState(false);
   const [notificacoesNaoLidas, setNotificacoesNaoLidas] = useState(0);
 
-  // FUNÇÃO DE BUSCA (Fora do useEffect para ser reutilizável)
   const buscarContagemNotificacoes = async (userId) => {
     if (!userId) return;
     try {
@@ -21,7 +20,6 @@ export default function Sidebar() {
         .select('*', { count: 'exact', head: true })
         .eq('usuario_id', userId)
         .eq('lida', false);
-      
       if (!error) setNotificacoesNaoLidas(count || 0);
     } catch (e) {
       console.error("Erro ao contar notificações", e);
@@ -29,37 +27,30 @@ export default function Sidebar() {
   };
 
   useEffect(() => {
-    // 1. Pega a sessão inicial
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) buscarContagemNotificacoes(session.user.id);
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      setSession(s);
+      if (s) buscarContagemNotificacoes(s.user.id);
     });
 
-    // 2. Monitora mudanças de login/logout
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-      if (newSession) buscarContagemNotificacoes(newSession.user.id);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, ns) => {
+      setSession(ns);
+      if (ns) buscarContagemNotificacoes(ns.user.id);
     });
 
-    // 3. Intervalo SEGURO (Apenas se houver sessão)
     const interval = setInterval(() => {
-      // Usamos uma técnica para pegar o ID sem depender do estado session no array
-      supabase.auth.getSession().then(({ data: { session: s } }) => {
-        if (s) buscarContagemNotificacoes(s.user.id);
-      });
-    }, 60000); // Aumentei para 60 segundos para poupar memória
+      if (session?.user?.id) buscarContagemNotificacoes(session.user.id);
+    }, 60000);
 
     return () => {
       subscription.unsubscribe();
       clearInterval(interval);
     };
-  }, []); // <--- VAZIO! ISSO MATA O LOOP INFINITO.
+  }, []); // VAZIO PARA NÃO DAR LOOP
 
   const confirmarSaida = async () => {
     await supabase.auth.signOut();
     setMostrarModal(false);
     router.push('/login');
-    router.refresh();
   };
 
   const menuItems = [
@@ -72,72 +63,45 @@ export default function Sidebar() {
     { name: 'SUPORTE / SAC', path: '/sac', icon: '🎧' },
   ];
 
+  const navStyle: React.CSSProperties = { width: '240px', backgroundColor: '#030a16', height: '100vh', position: 'fixed', left: 0, top: 0, padding: '30px 20px', display: 'flex', flexDirection: 'column', borderRight: '1px solid rgba(255,255,255,0.05)', zIndex: 1000 };
+  const itemStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 18px', borderRadius: '12px', transition: '0.3s', cursor: 'pointer' };
+  const badgeStyle: React.CSSProperties = { position: 'absolute', top: '-8px', right: '-8px', backgroundColor: '#ef4444', color: 'white', fontSize: '9px', fontWeight: 'bold', width: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #030a16' };
+
   return (
     <>
       <nav style={navStyle}>
         <div style={{ marginBottom: '40px', textAlign: 'center' }}>
           <h2 style={{ fontSize: '18px', fontWeight: '900', color: '#3b82f6', letterSpacing: '2px' }}>CONTRATA</h2>
         </div>
-
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
           {menuItems.map((item) => (
             <Link key={item.path} href={item.path} style={{ textDecoration: 'none' }}>
-              <div style={{
-                ...itemStyle,
-                backgroundColor: pathname === item.path ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
-                color: pathname === item.path ? '#3b82f6' : 'white',
-              }}>
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ fontSize: '18px' }}>{item.icon}</span>
-                  {item.notify && notificacoesNaoLidas > 0 && (
-                    <div style={badgeStyle}>{notificacoesNaoLidas}</div>
-                  )}
+              <div style={{ ...itemStyle, backgroundColor: pathname === item.path ? 'rgba(59, 130, 246, 0.1)' : 'transparent', color: pathname === item.path ? '#3b82f6' : 'white' }}>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <span>{item.icon}</span>
+                  {item.notify && notificacoesNaoLidas > 0 && <div style={badgeStyle}>{notificacoesNaoLidas}</div>}
                 </div>
                 <span style={{ fontWeight: 'bold', fontSize: '11px' }}>{item.name}</span>
               </div>
             </Link>
           ))}
-
-          {session ? (
-            <div onClick={() => setMostrarModal(true)} style={btnSairStyle}>
-              <span style={{ fontSize: '18px' }}>🚪</span>
-              <span style={{ fontWeight: 'bold', fontSize: '11px' }}>SAIR DA CONTA</span>
+          {session && (
+            <div onClick={() => setMostrarModal(true)} style={{ ...itemStyle, color: '#ef4444', marginTop: 'auto' }}>
+              <span>🚪</span> <span style={{ fontWeight: 'bold', fontSize: '11px' }}>SAIR</span>
             </div>
-          ) : (
-            <Link href="/login" style={{ textDecoration: 'none' }}>
-              <div style={btnLoginStyle}>
-                <span style={{ fontSize: '18px' }}>🔑</span>
-                <span style={{ fontWeight: 'bold', fontSize: '11px' }}>FAZER LOGIN</span>
-              </div>
-            </Link>
           )}
         </div>
       </nav>
 
       {mostrarModal && (
-        <div style={overlayStyle}>
-          <div style={modalStyle}>
-            <div style={{ fontSize: '40px', marginBottom: '15px' }}>⚠️</div>
-            <h3 style={{ margin: '0 0 10px 0', fontSize: '20px', color: 'white' }}>Deseja Sair?</h3>
-            <p style={{ opacity: 0.6, fontSize: '14px', marginBottom: '25px', color: 'white' }}>Você precisará fazer login novamente para acessar seu painel.</p>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-              <button onClick={() => setMostrarModal(false)} style={btnVoltarStyle}>VOLTAR</button>
-              <button onClick={confirmarSaida} style={btnConfirmarSairStyle}>SAIR AGORA</button>
-            </div>
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div style={{ backgroundColor: '#061224', padding: '40px', borderRadius: '20px', textAlign: 'center', color: 'white' }}>
+            <h3>Deseja Sair?</h3>
+            <button onClick={() => setMostrarModal(false)} style={{ marginRight: '10px' }}>VOLTAR</button>
+            <button onClick={confirmarSaida} style={{ backgroundColor: '#ef4444', color: 'white' }}>SAIR</button>
           </div>
         </div>
       )}
     </>
   );
 }
-
-// Estilos mantidos iguais
-const navStyle = { width: '240px', backgroundColor: '#030a16', height: '100vh', position: 'fixed', left: 0, top: 0, padding: '30px 20px', display: 'flex', flexDirection: 'column', borderRight: '1px solid rgba(255,255,255,0.05)', zIndex: 1000 };
-const itemStyle = { display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 18px', borderRadius: '12px', transition: '0.3s', cursor: 'pointer' };
-const badgeStyle = { position: 'absolute', top: '-8px', right: '-8px', backgroundColor: '#ef4444', color: 'white', fontSize: '9px', fontWeight: 'bold', width: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #030a16' };
-const overlayStyle = { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, backdropFilter: 'blur(8px)' };
-const modalStyle = { backgroundColor: '#061224', border: '1px solid rgba(255,255,255,0.1)', padding: '40px', borderRadius: '24px', textAlign: 'center', width: '100%', maxWidth: '380px' };
-const btnVoltarStyle = { backgroundColor: 'rgba(255,255,255,0.05)', color: 'white', border: 'none', padding: '12px 25px', borderRadius: '50px', fontWeight: 'bold', cursor: 'pointer' };
-const btnConfirmarSairStyle = { backgroundColor: '#ef4444', color: 'white', border: 'none', padding: '12px 25px', borderRadius: '50px', fontWeight: 'bold', cursor: 'pointer' };
-const btnSairStyle = { display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 18px', borderRadius: '12px', color: '#ef4444', cursor: 'pointer', marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' };
-const btnLoginStyle = { display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 18px', borderRadius: '12px', backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', cursor: 'pointer', marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' };
