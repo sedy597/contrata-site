@@ -8,6 +8,8 @@ import Link from 'next/link';
 export default function PostarVagaPage() {
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
+  const [salario, setSalario] = useState('');
+  const [tipo, setTipo] = useState('Presencial');
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
   const router = useRouter();
@@ -29,28 +31,27 @@ export default function PostarVagaPage() {
     setLoading(true);
 
     if (!user) {
-      alert("Sessão expirada. Faça login novamente.");
+      alert("Você precisa estar logado para postar.");
       setLoading(false);
       return;
     }
 
-    // TENTATIVA 1: Usando nomes padrão
-    // Se falhar, o erro no console nos dirá quais colunas existem.
     const { error } = await supabase.from('vagas').insert([
       {
         empresa_id: user.id,
         titulo: titulo,
-        descricao: descricao
+        descricao: descricao,
+        salario: salario,
+        tipo_trabalho: tipo,
+        cidade: 'Ibitinga'
       }
     ]);
 
     if (error) {
-      console.error("ERRO COMPLETO DO SUPABASE:", error);
-      
-      // Alerta amigável para o usuário
-      alert(`Erro: O banco não reconheceu a coluna. Verifique o console (F12) para ver os nomes das colunas.`);
+      console.error("ERRO:", error);
+      alert("Erro ao postar: " + error.message);
     } else {
-      alert("✅ SUCESSO! Vaga publicada.");
+      alert("✅ SUCESSO! Vaga de " + titulo + " publicada!");
       router.push('/feed');
     }
     setLoading(false);
@@ -58,43 +59,46 @@ export default function PostarVagaPage() {
 
   const s: { [key: string]: React.CSSProperties } = {
     bg: { minHeight: '100vh', backgroundColor: '#061224', color: 'white', padding: '40px 20px', fontFamily: 'sans-serif' },
-    container: { maxWidth: '600px', margin: '0 auto' },
-    card: { backgroundColor: '#0a1a31', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column' as 'column', gap: '20px' },
-    input: { backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', padding: '15px', borderRadius: '12px', color: 'white', outline: 'none' },
-    btn: { backgroundColor: '#2563eb', color: 'white', border: 'none', padding: '18px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }
+    container: { maxWidth: '700px', margin: '0 auto' },
+    card: { backgroundColor: '#0a1a31', padding: '40px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column' as 'column', gap: '20px' },
+    inputGroup: { display: 'flex', flexDirection: 'column' as 'column', gap: '8px' },
+    label: { fontSize: '10px', fontWeight: '900', color: '#3b82f6', letterSpacing: '1px' },
+    input: { backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', padding: '15px', borderRadius: '12px', color: 'white', fontSize: '14px', outline: 'none' },
+    btnPublicar: { backgroundColor: '#2563eb', color: 'white', border: 'none', padding: '18px', borderRadius: '12px', fontWeight: '900', cursor: 'pointer', marginTop: '10px' }
   };
 
   return (
     <main style={s.bg}>
       <div style={s.container}>
-        <Link href="/feed" style={{ color: '#3b82f6', textDecoration: 'none', fontSize: '14px' }}>← Voltar</Link>
-        <h1 style={{ fontSize: '28px', margin: '20px 0' }}>Anunciar Vaga</h1>
+        <Link href="/feed" style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 'bold' }}>← Voltar ao Feed</Link>
+        <h1 style={{ fontSize: '32px', fontWeight: '900', margin: '25px 0' }}>ANUNCIAR VAGA</h1>
 
         <form onSubmit={handleSubmit} style={s.card}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '12px', color: '#3b82f6', fontWeight: 'bold' }}>TÍTULO</label>
-            <input 
-              style={s.input} 
-              placeholder="Ex: Vendedor" 
-              value={titulo}
-              onChange={(e) => setTitulo(e.target.value)}
-              required 
-            />
+          <div style={s.inputGroup}>
+            <label style={s.label}>TÍTULO DA VAGA</label>
+            <input style={s.input} placeholder="Ex: Vendedor" value={titulo} onChange={(e) => setTitulo(e.target.value)} required />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '12px', color: '#3b82f6', fontWeight: 'bold' }}>DESCRIÇÃO</label>
-            <textarea 
-              style={{...s.input, minHeight: '150px'}} 
-              placeholder="Requisitos e atividades..." 
-              value={descricao}
-              onChange={(e) => setDescricao(e.target.value)}
-              required
-            />
+          <div style={s.inputGroup}>
+            <label style={s.label}>TIPO</label>
+            <select style={s.input} value={tipo} onChange={(e) => setTipo(e.target.value)}>
+              <option value="Presencial">Presencial</option>
+              <option value="Remoto">Remoto</option>
+            </select>
           </div>
 
-          <button type="submit" disabled={loading} style={s.btn}>
-            {loading ? 'ENVIANDO...' : 'PUBLICAR AGORA'}
+          <div style={s.inputGroup}>
+            <label style={s.label}>SALÁRIO</label>
+            <input style={s.input} placeholder="Ex: 1500" value={salario} onChange={(e) => setSalario(e.target.value)} />
+          </div>
+
+          <div style={s.inputGroup}>
+            <label style={s.label}>DESCRIÇÃO</label>
+            <textarea style={{...s.input, minHeight: '120px'}} placeholder="Detalhes..." value={descricao} onChange={(e) => setDescricao(e.target.value)} required />
+          </div>
+
+          <button type="submit" disabled={loading} style={s.btnPublicar}>
+            {loading ? 'ENVIANDO...' : 'PUBLICAR VAGA AGORA'}
           </button>
         </form>
       </div>
