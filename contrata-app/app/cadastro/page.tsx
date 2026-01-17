@@ -7,7 +7,6 @@ import Link from 'next/link';
 export default function CadastroPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  // NOVO: Estado para armazenar o tipo de conta (Item 5 do seu documento)
   const [userType, setUserType] = useState('candidato'); 
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -18,24 +17,39 @@ export default function CadastroPage() {
     e.preventDefault();
     setLoading(true);
 
-    // ALTERADO: Enviando o user_type para o Supabase
-    const { error } = await supabase.auth.signUp({ 
+    // 1. Criar a conta no Supabase
+    const { data, error } = await supabase.auth.signUp({ 
       email, 
       password,
       options: {
         data: {
-          user_type: userType, // Salva se é candidato ou empresa
-          plano: 'free'        // Já define o plano inicial como gratuito
+          user_type: userType,
+          plano: 'free'
         }
       }
     });
 
     if (error) {
       alert("Erro: " + error.message);
-    } else {
-      alert('Cadastro realizado! Verifique seu e-mail para confirmar.');
-      router.push('/login');
+      setLoading(false);
+      return;
     }
+
+    // 2. LOGICA DE ENTRADA AUTOMÁTICA
+    // Se não houver erro e o usuário foi criado, fazemos o login imediato
+    const { error: loginError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (loginError) {
+      // Se der erro no auto-login, manda para a página de login apenas por segurança
+      router.push('/login');
+    } else {
+      // SUCESSO TOTAL: Vai direto para o Feed já logado!
+      router.push('/feed');
+    }
+    
     setLoading(false);
   };
 
@@ -85,7 +99,6 @@ export default function CadastroPage() {
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
             
-            {/* CAMPO: TIPO DE CONTA (ITEM 5 DO DOC) */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
               <label style={labelStyle}>EU SOU:</label>
               <select 
@@ -128,7 +141,7 @@ export default function CadastroPage() {
               disabled={loading}
               style={submitButtonStyle}
             >
-              {loading ? 'PROCESSANDO...' : 'FINALIZAR CADASTRO'}
+              {loading ? 'CRIANDO CONTA...' : 'FINALIZAR E ENTRAR'}
             </button>
           </div>
 
@@ -148,59 +161,9 @@ export default function CadastroPage() {
   );
 }
 
-// ESTILOS REUTILIZÁVEIS
-const navButtonStyle: React.CSSProperties = {
-  backgroundColor: '#1e3a8a',
-  color: '#ffffff',
-  padding: '12px 30px',
-  borderRadius: '50px',
-  fontWeight: 'bold',
-  fontSize: '10px',
-  textTransform: 'uppercase',
-  textDecoration: 'none',
-  letterSpacing: '2px'
-};
-
-const formCardStyle: React.CSSProperties = {
-  width: '100%',
-  maxWidth: '400px',
-  backgroundColor: 'rgba(255, 255, 255, 0.05)',
-  backdropFilter: 'blur(20px)',
-  padding: '40px',
-  borderRadius: '30px',
-  border: '1px solid rgba(255, 255, 255, 0.1)',
-  boxShadow: '0 25px 50px rgba(0,0,0,0.5)'
-};
-
-const labelStyle: React.CSSProperties = {
-  fontSize: '10px',
-  fontWeight: '900',
-  color: '#3b82f6',
-  letterSpacing: '1px'
-};
-
-const inputStyle: React.CSSProperties = {
-  backgroundColor: '#ffffff',
-  color: '#000000',
-  padding: '15px 20px',
-  borderRadius: '15px',
-  border: 'none',
-  outline: 'none',
-  fontSize: '14px',
-  fontWeight: 'bold'
-};
-
-const submitButtonStyle: React.CSSProperties = {
-  backgroundColor: '#2563eb',
-  color: '#ffffff',
-  padding: '15px',
-  borderRadius: '15px',
-  border: 'none',
-  fontWeight: '900',
-  fontSize: '12px',
-  textTransform: 'uppercase',
-  letterSpacing: '2px',
-  cursor: 'pointer',
-  marginTop: '10px',
-  boxShadow: '0 10px 20px rgba(37,99,235,0.3)'
-};
+// Estilos mantidos conforme o seu original
+const navButtonStyle: React.CSSProperties = { backgroundColor: '#1e3a8a', color: '#ffffff', padding: '12px 30px', borderRadius: '50px', fontWeight: 'bold', fontSize: '10px', textTransform: 'uppercase', textDecoration: 'none', letterSpacing: '2px' };
+const formCardStyle: React.CSSProperties = { width: '100%', maxWidth: '400px', backgroundColor: 'rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(20px)', padding: '40px', borderRadius: '30px', border: '1px solid rgba(255, 255, 255, 0.1)', boxShadow: '0 25px 50px rgba(0,0,0,0.5)' };
+const labelStyle: React.CSSProperties = { fontSize: '10px', fontWeight: '900', color: '#3b82f6', letterSpacing: '1px' };
+const inputStyle: React.CSSProperties = { backgroundColor: '#ffffff', color: '#000000', padding: '15px 20px', borderRadius: '15px', border: 'none', outline: 'none', fontSize: '14px', fontWeight: 'bold' };
+const submitButtonStyle: React.CSSProperties = { backgroundColor: '#2563eb', color: '#ffffff', padding: '15px', borderRadius: '15px', border: 'none', fontWeight: '900', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '2px', cursor: 'pointer', marginTop: '10px', boxShadow: '0 10px 20px rgba(37,99,235,0.3)' };
