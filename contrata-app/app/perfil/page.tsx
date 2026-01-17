@@ -1,45 +1,80 @@
 // @ts-nocheck
-// ... dentro do seu componente PerfilPage, adicione este estado:
-const [inscritos, setInscritos] = useState([]);
+'use client';
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import Sidebar from '../components/Sidebar';
 
-// ... dentro do useEffect onde você carrega os dados:
-async function buscarInscritos() {
-  const { data: { session } } = await supabase.auth.getSession();
-  const { data, error } = await supabase
-    .from('candidaturas')
-    .select(`
-      id,
-      status,
-      vagas (titulo),
-      profiles:candidato_id (full_name, telefone, curriculo_url)
-    `)
-    .eq('empresa_id', session.user.id);
+export default function PerfilPage() {
+  const [user, setUser] = useState(null);
+  const [perfil, setPerfil] = useState({});
+  const [candidaturasRecebidas, setCandidaturasRecebidas] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  if (!error) setInscritos(data || []);
-}
-buscarInscritos();
+  useEffect(() => {
+    async function carregarDadosIniciais() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUser(session.user);
+        
+        // Busca perfil
+        const { data: p } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+        setPerfil(p || {});
 
-// ... No seu HTML (dentro do return), abaixo da lista de vagas:
-<h2 style={{ marginTop: '50px', fontSize: '22px', fontWeight: '900' }}>CANDIDATOS INTERESSADOS</h2>
-{inscritos.length > 0 ? (
-  inscritos.map(cand => (
-    <div key={cand.id} style={{ backgroundColor: '#0a1a31', padding: '20px', borderRadius: '20px', marginBottom: '15px', border: '1px solid rgba(255,255,255,0.1)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <h4 style={{ margin: 0, color: '#3b82f6' }}>{cand.profiles.full_name}</h4>
-          <p style={{ fontSize: '13px', margin: '5px 0' }}>Vaga: <strong>{cand.vagas?.titulo}</strong></p>
-          <p style={{ fontSize: '13px', opacity: 0.6 }}>WhatsApp: {cand.profiles.telefone || 'Não informado'}</p>
-        </div>
-        <a 
-          href={cand.profiles.curriculo_url} 
-          target="_blank" 
-          style={{ backgroundColor: '#10b981', color: 'white', padding: '8px 15px', borderRadius: '8px', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold' }}
-        >
-          VER CURRÍCULO
-        </a>
-      </div>
+        // BUSCA CANDIDATURAS REAIS (Onde o dono do perfil é a empresa)
+        const { data: cands, error } = await supabase
+          .from('candidaturas')
+          .select(`
+            id,
+            vagas (titulo),
+            profiles:candidato_id (full_name, telefone, curriculo_url)
+          `)
+          .eq('empresa_id', session.user.id);
+
+        if (!error) setCandidaturasRecebidas(cands || []);
+      }
+      setLoading(false);
+    }
+    carregarDadosIniciais();
+  }, []);
+
+  const s = {
+    card: { backgroundColor: '#0a1a31', padding: '25px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '15px' },
+    btnCV: { backgroundColor: '#10b981', color: 'white', padding: '8px 15px', borderRadius: '8px', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold' }
+  };
+
+  return (
+    <div style={{ display: 'flex', backgroundColor: '#061224', minHeight: '100vh', color: 'white' }}>
+      <Sidebar />
+      <main style={{ flex: 1, marginLeft: '240px', padding: '40px' }}>
+        
+        <section style={s.card}>
+          <h1>{perfil.full_name || 'Meu Perfil'}</h1>
+          <p style={{ opacity: 0.5 }}>{user?.email}</p>
+        </section>
+
+        <h2 style={{ margin: '40px 0 20px 0', fontSize: '20px', fontWeight: '900' }}>
+          📩 CANDIDATURAS RECEBIDAS
+        </h2>
+
+        {candidaturasRecebidas.length > 0 ? (
+          candidaturasRecebidas.map(item => (
+            <div key={item.id} style={s.card}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 style={{ margin: 0 }}>{item.profiles?.full_name || 'Candidato'}</h3>
+                  <p style={{ fontSize: '13px', opacity: 0.6 }}>Vaga: {item.vagas?.titulo}</p>
+                  <p style={{ fontSize: '13px', color: '#3b82f6' }}>WhatsApp: {item.profiles?.telefone}</p>
+                </div>
+                {item.profiles?.curriculo_url && (
+                  <a href={item.profiles.curriculo_url} target="_blank" style={s.btnCV}>ABRIR CURRÍCULO</a>
+                )}
+              </div>
+            </div>
+          ))
+        ) : (
+          <p style={{ opacity: 0.3 }}>Nenhuma candidatura recebida ainda.</p>
+        )}
+      </main>
     </div>
-  ))
-) : (
-  <p style={{ opacity: 0.3 }}>Nenhum candidato inscrito ainda.</p>
-)}
+  );
+}
