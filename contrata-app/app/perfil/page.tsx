@@ -10,7 +10,6 @@ export default function PerfilPage() {
   const [user, setUser] = useState(null);
   const [meusPosts, setMeusPosts] = useState([]);
   
-  // TODOS OS CAMPOS RECUPERADOS
   const [perfil, setPerfil] = useState({
     username: '',
     nome_completo: '',
@@ -28,11 +27,9 @@ export default function PerfilPage() {
     const { data: { user: logado } } = await supabase.auth.getUser();
     if (logado) {
       setUser(logado);
-      // Busca Perfil Profissional
       const { data: p } = await supabase.from('profiles').select('*').eq('id', logado.id).single();
       if (p) setPerfil(prev => ({ ...prev, ...p }));
 
-      // Busca Janela do Feed
       const { data: posts } = await supabase
         .from('posts')
         .select('*')
@@ -56,6 +53,29 @@ export default function PerfilPage() {
     setLoading(false);
   };
 
+  // NOVO: Função para Deletar a Conta (Item de Segurança)
+  const handleDeleteAccount = async () => {
+    const confirmou = window.confirm(
+      "⚠️ AVISO IRREVERSÍVEL:\n\nTem certeza que deseja DELETAR SUA CONTA? Todos os seus dados, perfis, posts e candidaturas serão apagados para sempre."
+    );
+
+    if (confirmou) {
+      setLoading(true);
+      try {
+        // Chama a função RPC que criamos no SQL Editor do Supabase
+        const { error } = await supabase.rpc('delete_user_account');
+        if (error) throw error;
+
+        alert("Sua conta foi excluída permanentemente.");
+        localStorage.clear();
+        window.location.href = '/'; // Volta para a Landing Page
+      } catch (err) {
+        alert("Erro ao excluir: " + err.message);
+        setLoading(false);
+      }
+    }
+  };
+
   if (loading && !editando) return <div style={msgCentral}>Sincronizando Perfil...</div>;
 
   return (
@@ -63,7 +83,6 @@ export default function PerfilPage() {
       <div style={{ maxWidth: '1150px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 320px', gap: '30px' }}>
         
         <main>
-          {/* CABEÇALHO COM FOTO E DADOS PRINCIPAIS */}
           <div style={cardHeader}>
             <div style={{ display: 'flex', gap: '35px', alignItems: 'flex-start' }}>
               <div style={avatarEstilo}>
@@ -87,7 +106,6 @@ export default function PerfilPage() {
                   <span><b>{meusPosts.length}</b> posts</span>
                 </div>
                 
-                {/* CAMPOS PROFISSIONAIS EXIBIDOS */}
                 <div style={{marginTop: '15px'}}>
                    <p style={{fontSize: '14px', color: '#fbbf24', marginBottom: '5px'}}><b>Cargo:</b> {perfil.cargo_atual || 'Não informado'}</p>
                    <p style={{fontSize: '14px', opacity: 0.8}}><b>Bio:</b> {perfil.experiencia || 'Sem descrição profissional.'}</p>
@@ -108,7 +126,6 @@ export default function PerfilPage() {
             )}
           </div>
 
-          {/* JANELA DAS POSTAGENS DO FEED */}
           <h2 style={{fontSize: '20px', fontWeight: '900', marginBottom: '20px'}}>Minha Atividade no Feed</h2>
           {meusPosts.length > 0 ? meusPosts.map(post => (
             <div key={post.id} style={cardPost}>
@@ -130,6 +147,14 @@ export default function PerfilPage() {
           <div style={{...sidebarCard, marginTop: '20px'}}>
             <Link href="/perfil/candidaturas" style={opcaoLink}>📁 Candidaturas Enviadas</Link>
             <Link href="/planos" style={{...opcaoLink, color: '#fbbf24'}}>🚀 Mudar para PRO</Link>
+            
+            {/* NOVO: Botão de Deletar Conta (Fica no final da lista) */}
+            <button 
+              onClick={handleDeleteAccount}
+              style={{...opcaoLink, color: '#ff4444', border: 'none', background: 'none', width: '100%', textAlign: 'left', cursor: 'pointer', marginTop: '10px', opacity: 0.6}}
+            >
+              🗑️ Excluir minha conta
+            </button>
           </div>
         </aside>
 
@@ -138,7 +163,7 @@ export default function PerfilPage() {
   );
 }
 
-// ESTILOS RECUPERADOS
+// ESTILOS (Mantidos)
 const msgCentral = { minHeight: '100vh', backgroundColor: '#061224', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' };
 const cardHeader = { backgroundColor: 'rgba(255,255,255,0.03)', padding: '40px', borderRadius: '35px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '40px' };
 const avatarEstilo = { width: '120px', height: '120px', backgroundColor: '#2563eb', borderRadius: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '50px', fontWeight: '900', overflow: 'hidden' };
