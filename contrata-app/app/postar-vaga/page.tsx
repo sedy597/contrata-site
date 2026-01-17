@@ -34,7 +34,8 @@ export default function PostarVagaPage() {
       return;
     }
 
-    // Enviando o MÍNIMO necessário para o banco aceitar sem reclamar de colunas
+    // TENTATIVA 1: Usando nomes padrão
+    // Se falhar, o erro no console nos dirá quais colunas existem.
     const { error } = await supabase.from('vagas').insert([
       {
         empresa_id: user.id,
@@ -44,8 +45,10 @@ export default function PostarVagaPage() {
     ]);
 
     if (error) {
-      console.error("Erro no Supabase:", error);
-      alert("Erro ao postar: " + error.message);
+      console.error("ERRO COMPLETO DO SUPABASE:", error);
+      
+      // Alerta amigável para o usuário
+      alert(`Erro: O banco não reconheceu a coluna. Verifique o console (F12) para ver os nomes das colunas.`);
     } else {
       alert("✅ SUCESSO! Vaga publicada.");
       router.push('/feed');
