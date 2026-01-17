@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use client';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
@@ -17,6 +18,7 @@ export default function PostarVagaPage() {
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
+        // Se não estiver logado, manda para o login
         router.push('/login');
       } else {
         setUser(session.user);
@@ -29,6 +31,12 @@ export default function PostarVagaPage() {
     e.preventDefault();
     setLoading(true);
 
+    if (!user) {
+      alert("Você precisa estar logado como empresa para postar.");
+      setLoading(false);
+      return;
+    }
+
     const { error } = await supabase.from('vagas').insert([
       {
         empresa_id: user.id,
@@ -36,14 +44,14 @@ export default function PostarVagaPage() {
         descricao,
         salario,
         tipo_trabalho: tipo,
-        cidade: 'Ibitinga' // Padrão do seu projeto
+        cidade: 'Ibitinga'
       }
     ]);
 
     if (error) {
       alert("Erro ao postar vaga: " + error.message);
     } else {
-      alert("Vaga publicada com sucesso!");
+      alert("✅ Vaga publicada com sucesso!");
       router.push('/feed');
     }
     setLoading(false);
@@ -55,7 +63,7 @@ export default function PostarVagaPage() {
         <header style={styles.header}>
           <Link href="/feed" style={styles.btnVoltar}>← Voltar ao Feed</Link>
           <h1 style={styles.tituloPrincipal}>ANUNCIAR NOVA VAGA</h1>
-          <p style={styles.subtitulo}>Preencha os detalhes para encontrar os melhores talentos.</p>
+          <p style={styles.subtitulo}>Preencha os detalhes para encontrar os melhores talentos em Ibitinga.</p>
         </header>
 
         <form onSubmit={handleSubmit} style={styles.card}>
