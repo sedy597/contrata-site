@@ -55,18 +55,23 @@ export default function PerfilPage() {
     const { error } = await supabase.from('vagas').insert([
       { ...novaVaga, empresa_id: user.id, salario: parseFloat(novaVaga.salario) || 0 }
     ]);
-    if (!error) { alert("Vaga postada!"); setShowModal(false); carregarTudo(); }
+    if (!error) { 
+        alert("Vaga postada com sucesso!"); 
+        setShowModal(false); 
+        setNovaVaga({ titulo: '', descricao: '', salario: '', tipo_trabalho: 'Presencial' });
+        carregarTudo(); 
+    }
   }
 
   async function excluirVaga(id) {
-    if (confirm("Excluir esta vaga?")) {
+    if (confirm("Deseja realmente excluir esta vaga?")) {
       await supabase.from('vagas').delete().eq('id', id);
       carregarTudo();
     }
   }
 
   async function deletarConta() {
-    if (confirm("⚠️ EXCLUIR CONTA PERMANENTEMENTE? (LGPD)")) {
+    if (confirm("⚠️ ATENÇÃO: Deseja excluir sua conta permanentemente? Esta ação cumpre os requisitos da LGPD e não pode ser desfeita.")) {
       await supabase.from('profiles').delete().eq('id', user.id);
       await supabase.auth.signOut();
       router.push('/login');
@@ -90,78 +95,93 @@ export default function PerfilPage() {
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
               <h1 style={{ fontWeight: '900', fontSize: '28px' }}>Painel do Usuário</h1>
-              <button onClick={() => setShowModal(true)} style={s.btnPostar}>+ POSTAR VAGA</button>
+              {perfil.user_type === 'empresa' && (
+                <button onClick={() => setShowModal(true)} style={s.btnPostar}>+ POSTAR VAGA</button>
+              )}
             </div>
 
             <section style={s.card}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#3b82f6', fontSize: '12px', fontWeight: 'bold' }}>{perfil.user_type?.toUpperCase()}</span>
-                <button onClick={() => setEditando(!editando)} style={{ color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer' }}>
+                <span style={{ backgroundColor: '#3b82f6', padding: '4px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold' }}>
+                  CONTA {perfil.user_type?.toUpperCase()}
+                </span>
+                <button onClick={() => setEditando(!editando)} style={{ color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>
                   {editando ? 'CANCELAR' : 'EDITAR PERFIL'}
                 </button>
               </div>
 
               {editando ? (
                 <div style={{ marginTop: '20px' }}>
-                  <input style={s.input} value={perfil.full_name} onChange={e => setPerfil({...perfil, full_name: e.target.value})} placeholder="Nome" />
-                  <textarea style={{...s.input, height: '80px'}} value={perfil.bio} onChange={e => setPerfil({...perfil, bio: e.target.value})} placeholder="Sua Bio" />
-                  <input style={s.input} value={perfil.telefone} onChange={e => setPerfil({...perfil, telefone: e.target.value})} placeholder="WhatsApp" />
-                  <button onClick={salvarPerfil} style={s.btnPrimary}>SALVAR</button>
+                  <input style={s.input} value={perfil.full_name} onChange={e => setPerfil({...perfil, full_name: e.target.value})} placeholder="Nome Completo" />
+                  <textarea style={{...s.input, height: '80px'}} value={perfil.bio} onChange={e => setPerfil({...perfil, bio: e.target.value})} placeholder="Sua Bio (Resumo profissional ou da empresa)" />
+                  <input style={s.input} value={perfil.telefone} onChange={e => setPerfil({...perfil, telefone: e.target.value})} placeholder="WhatsApp (DDD + Número)" />
+                  <button onClick={salvarPerfil} style={s.btnPrimary}>SALVAR ALTERAÇÕES</button>
                 </div>
               ) : (
                 <div style={{ marginTop: '20px' }}>
                   <h2 style={{ fontSize: '32px', fontWeight: '900', margin: 0 }}>{perfil.full_name || 'Usuário'}</h2>
                   <p style={{ opacity: 0.5 }}>{user?.email}</p>
-                  <p style={{ marginTop: '15px', color: '#cbd5e1' }}>{perfil.bio || 'Sem bio.'}</p>
+                  <p style={{ marginTop: '15px', color: '#cbd5e1', lineHeight: '1.6' }}>{perfil.bio || 'Sem bio definida.'}</p>
                 </div>
               )}
             </section>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              <div style={s.card}>
-                <h3>MINHAS VAGAS</h3>
-                {vagasMinhas.map(v => (
-                  <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                    <span>{v.titulo}</span>
-                    <button onClick={() => excluirVaga(v.id)} style={{color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer'}}>EXCLUIR</button>
-                  </div>
-                ))}
-              </div>
-              <div style={s.card}>
-                <h3>CANDIDATOS</h3>
-                {inscritos.map(i => (
-                  <div key={i.id} style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between' }}>
-                    <div>
-                      <strong>{i.profiles?.full_name}</strong>
-                      <p style={{ margin: 0, fontSize: '11px', opacity: 0.5 }}>{i.vagas?.titulo}</p>
+            {perfil.user_type === 'empresa' && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <div style={s.card}>
+                    <h3 style={{ fontSize: '16px', marginBottom: '20px', opacity: 0.7 }}>MINHAS VAGAS</h3>
+                    {vagasMinhas.length === 0 ? <p style={{opacity: 0.3}}>Nenhuma vaga ativa.</p> : vagasMinhas.map(v => (
+                    <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <span style={{fontWeight: '500'}}>{v.titulo}</span>
+                        <button onClick={() => excluirVaga(v.id)} style={{color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer', fontSize: '12px'}}>EXCLUIR</button>
                     </div>
-                    {i.profiles?.curriculo_url && <a href={i.profiles.curriculo_url} target="_blank" style={{ color: '#10b981', fontWeight: 'bold', fontSize: '11px' }}>VER CV</a>}
-                  </div>
-                ))}
-              </div>
-            </div>
+                    ))}
+                </div>
+                <div style={s.card}>
+                    <h3 style={{ fontSize: '16px', marginBottom: '20px', opacity: 0.7 }}>CANDIDATOS INTERESSADOS</h3>
+                    {inscritos.length === 0 ? <p style={{opacity: 0.3}}>Nenhum inscrito ainda.</p> : inscritos.map(i => (
+                    <div key={i.id} style={{ padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                        <strong style={{display: 'block'}}>{i.profiles?.full_name}</strong>
+                        <span style={{ fontSize: '11px', opacity: 0.5 }}>Vaga: {i.vagas?.titulo}</span>
+                        </div>
+                        {i.profiles?.curriculo_url && (
+                            <a href={i.profiles.curriculo_url} target="_blank" style={{ color: '#10b981', fontWeight: 'bold', fontSize: '11px', textDecoration: 'none', border: '1px solid #10b981', padding: '4px 8px', borderRadius: '6px' }}>
+                                VER CV
+                            </a>
+                        )}
+                    </div>
+                    ))}
+                </div>
+                </div>
+            )}
 
             {showModal && (
-              <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-                <div style={{ backgroundColor: '#0a1a31', padding: '40px', borderRadius: '24px', width: '450px' }}>
-                  <h2>Nova Vaga</h2>
+              <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, backdropFilter: 'blur(5px)' }}>
+                <div style={{ backgroundColor: '#0a1a31', padding: '40px', borderRadius: '24px', width: '450px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <h2 style={{ marginBottom: '20px' }}>Nova Oportunidade</h2>
                   <form onSubmit={postarVaga}>
-                    <input style={s.input} placeholder="Título" required onChange={e => setNovaVaga({...novaVaga, titulo: e.target.value})} />
-                    <textarea style={{...s.input, height: '100px'}} placeholder="Descrição" required onChange={e => setNovaVaga({...novaVaga, descricao: e.target.value})} />
-                    <input style={s.input} type="number" placeholder="Salário" onChange={e => setNovaVaga({...novaVaga, salario: e.target.value})} />
-                    <button type="submit" style={{...s.btnPrimary, width: '100%'}}>PUBLICAR</button>
-                    <button type="button" onClick={() => setShowModal(false)} style={{ width: '100%', background: 'none', color: 'white', border: 'none', marginTop: '10px', cursor: 'pointer' }}>FECHAR</button>
+                    <input style={s.input} placeholder="Título da Vaga (ex: Vendedor)" required onChange={e => setNovaVaga({...novaVaga, titulo: e.target.value})} />
+                    <textarea style={{...s.input, height: '100px'}} placeholder="Descrição detalhada e requisitos" required onChange={e => setNovaVaga({...novaVaga, descricao: e.target.value})} />
+                    <input style={s.input} type="number" placeholder="Salário (Opcional)" onChange={e => setNovaVaga({...novaVaga, salario: e.target.value})} />
+                    <select style={s.input} onChange={e => setNovaVaga({...novaVaga, tipo_trabalho: e.target.value})}>
+                        <option value="Presencial">Presencial</option>
+                        <option value="Híbrido">Híbrido</option>
+                        <option value="Remoto">Remoto</option>
+                    </select>
+                    <button type="submit" style={{...s.btnPrimary, width: '100%', marginTop: '10px'}}>PUBLICAR AGORA</button>
+                    <button type="button" onClick={() => setShowModal(false)} style={{ width: '100%', background: 'none', color: 'rgba(255,255,255,0.5)', border: 'none', marginTop: '15px', cursor: 'pointer', fontSize: '14px' }}>CANCELAR</button>
                   </form>
                 </div>
               </div>
             )}
 
-            <div style={{ marginTop: '40px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px', display: 'flex', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', gap: '20px' }}>
-                <Link href="/planos" style={{ color: '#facc15', fontWeight: 'bold', textDecoration: 'none' }}>👑 PLANOS</Link>
-                <Link href="/sac" style={{ color: '#3b82f6', fontWeight: 'bold', textDecoration: 'none' }}>🎧 SUPORTE</Link>
+            <div style={{ marginTop: '40px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '25px' }}>
+                <Link href="/planos" style={{ color: '#facc15', fontWeight: 'bold', textDecoration: 'none', fontSize: '14px' }}>👑 PLANOS PREMIUM</Link>
+                <Link href="/sac" style={{ color: '#3b82f6', fontWeight: 'bold', textDecoration: 'none', fontSize: '14px' }}>🎧 SUPORTE TÉCNICO</Link>
               </div>
-              <button onClick={deletarConta} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px' }}>EXCLUIR CONTA</button>
+              <button onClick={deletarConta} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', opacity: 0.6 }}>EXCLUIR MINHA CONTA</button>
             </div>
           </>
         )}
