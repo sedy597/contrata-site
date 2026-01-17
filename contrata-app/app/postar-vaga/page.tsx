@@ -18,7 +18,6 @@ export default function PostarVagaPage() {
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        // Se não estiver logado, manda para o login
         router.push('/login');
       } else {
         setUser(session.user);
@@ -121,15 +120,15 @@ export default function PostarVagaPage() {
   );
 }
 
-const styles = {
+const styles: { [key: string]: React.CSSProperties } = {
   bg: { minHeight: '100vh', backgroundColor: '#061224', color: 'white', padding: '40px 20px', fontFamily: 'sans-serif' },
   container: { maxWidth: '700px', margin: '0 auto' },
   header: { marginBottom: '30px' },
   btnVoltar: { color: '#3b82f6', textDecoration: 'none', fontSize: '14px', fontWeight: 'bold' },
   tituloPrincipal: { fontSize: '32px', fontWeight: '900', marginTop: '20px', letterSpacing: '-1px' },
   subtitulo: { opacity: 0.5, fontSize: '14px' },
-  card: { backgroundColor: '#0a1a31', padding: '40px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', gap: '20px' },
-  inputGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
+  card: { backgroundColor: '#0a1a31', padding: '40px', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column' as 'column', gap: '20px' },
+  inputGroup: { display: 'flex', flexDirection: 'column' as 'column', gap: '8px' },
   label: { fontSize: '10px', fontWeight: '900', color: '#3b82f6', letterSpacing: '1px' },
   input: { backgroundColor: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', padding: '15px', borderRadius: '12px', color: 'white', fontSize: '14px', outline: 'none' },
   btnPublicar: { backgroundColor: '#2563eb', color: 'white', border: 'none', padding: '18px', borderRadius: '12px', fontWeight: '900', cursor: 'pointer', marginTop: '10px' }

@@ -12,30 +12,9 @@ export default function Sidebar() {
   const [mostrarModal, setMostrarModal] = useState(false);
   const [notificacoesNaoLidas, setNotificacoesNaoLidas] = useState(0);
 
-  useEffect(() => {
-    // 1. Monitora a Sessão
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) buscarContagemNotificacoes(session.user.id);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) buscarContagemNotificacoes(session.user.id);
-    });
-
-    // 2. Busca Notificações a cada 30 segundos se estiver logado
-    const interval = setInterval(() => {
-      if (session) buscarContagemNotificacoes(session.user.id);
-    }, 30000);
-
-    return () => {
-      subscription.unsubscribe();
-      clearInterval(interval);
-    };
-  }, [session]);
-
+  // FUNÇÃO DE BUSCA (Fora do useEffect para ser reutilizável)
   const buscarContagemNotificacoes = async (userId) => {
+    if (!userId) return;
     try {
       const { count, error } = await supabase
         .from('notificacoes')
@@ -48,6 +27,33 @@ export default function Sidebar() {
       console.error("Erro ao contar notificações", e);
     }
   };
+
+  useEffect(() => {
+    // 1. Pega a sessão inicial
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session) buscarContagemNotificacoes(session.user.id);
+    });
+
+    // 2. Monitora mudanças de login/logout
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+      if (newSession) buscarContagemNotificacoes(newSession.user.id);
+    });
+
+    // 3. Intervalo SEGURO (Apenas se houver sessão)
+    const interval = setInterval(() => {
+      // Usamos uma técnica para pegar o ID sem depender do estado session no array
+      supabase.auth.getSession().then(({ data: { session: s } }) => {
+        if (s) buscarContagemNotificacoes(s.user.id);
+      });
+    }, 60000); // Aumentei para 60 segundos para poupar memória
+
+    return () => {
+      subscription.unsubscribe();
+      clearInterval(interval);
+    };
+  }, []); // <--- VAZIO! ISSO MATA O LOOP INFINITO.
 
   const confirmarSaida = async () => {
     await supabase.auth.signOut();
@@ -83,7 +89,6 @@ export default function Sidebar() {
               }}>
                 <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <span style={{ fontSize: '18px' }}>{item.icon}</span>
-                  {/* BADGE DE NOTIFICAÇÃO VERMELHO */}
                   {item.notify && notificacoesNaoLidas > 0 && (
                     <div style={badgeStyle}>{notificacoesNaoLidas}</div>
                   )}
@@ -109,7 +114,6 @@ export default function Sidebar() {
         </div>
       </nav>
 
-      {/* MODAL DE SAÍDA */}
       {mostrarModal && (
         <div style={overlayStyle}>
           <div style={modalStyle}>
@@ -127,35 +131,12 @@ export default function Sidebar() {
   );
 }
 
-// ESTILOS OBJETO
-const navStyle = {
-  width: '240px', backgroundColor: '#030a16', height: '100vh', position: 'fixed',
-  left: 0, top: 0, padding: '30px 20px', display: 'flex', flexDirection: 'column',
-  borderRight: '1px solid rgba(255,255,255,0.05)', zIndex: 1000
-};
-
-const itemStyle = {
-  display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 18px', borderRadius: '12px',
-  transition: '0.3s', cursor: 'pointer'
-};
-
-const badgeStyle = {
-  position: 'absolute', top: '-8px', right: '-8px', backgroundColor: '#ef4444', color: 'white',
-  fontSize: '9px', fontWeight: 'bold', width: '16px', height: '16px', borderRadius: '50%',
-  display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #030a16'
-};
-
-const overlayStyle = {
-  position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)',
-  display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999,
-  backdropFilter: 'blur(8px)'
-};
-
-const modalStyle = {
-  backgroundColor: '#061224', border: '1px solid rgba(255,255,255,0.1)',
-  padding: '40px', borderRadius: '24px', textAlign: 'center', width: '100%', maxWidth: '380px'
-};
-
+// Estilos mantidos iguais
+const navStyle = { width: '240px', backgroundColor: '#030a16', height: '100vh', position: 'fixed', left: 0, top: 0, padding: '30px 20px', display: 'flex', flexDirection: 'column', borderRight: '1px solid rgba(255,255,255,0.05)', zIndex: 1000 };
+const itemStyle = { display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 18px', borderRadius: '12px', transition: '0.3s', cursor: 'pointer' };
+const badgeStyle = { position: 'absolute', top: '-8px', right: '-8px', backgroundColor: '#ef4444', color: 'white', fontSize: '9px', fontWeight: 'bold', width: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #030a16' };
+const overlayStyle = { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, backdropFilter: 'blur(8px)' };
+const modalStyle = { backgroundColor: '#061224', border: '1px solid rgba(255,255,255,0.1)', padding: '40px', borderRadius: '24px', textAlign: 'center', width: '100%', maxWidth: '380px' };
 const btnVoltarStyle = { backgroundColor: 'rgba(255,255,255,0.05)', color: 'white', border: 'none', padding: '12px 25px', borderRadius: '50px', fontWeight: 'bold', cursor: 'pointer' };
 const btnConfirmarSairStyle = { backgroundColor: '#ef4444', color: 'white', border: 'none', padding: '12px 25px', borderRadius: '50px', fontWeight: 'bold', cursor: 'pointer' };
 const btnSairStyle = { display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 18px', borderRadius: '12px', color: '#ef4444', cursor: 'pointer', marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' };
