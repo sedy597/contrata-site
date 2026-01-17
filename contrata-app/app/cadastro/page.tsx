@@ -7,25 +7,42 @@ import Link from 'next/link';
 export default function CadastroPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  // NOVO: Estado para armazenar o tipo de conta (Item 5 do seu documento)
+  const [userType, setUserType] = useState('candidato'); 
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Caminho da sua logo
   const logoPath = "/logo.png";
 
   const handleCadastro = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await supabase.auth.signUp({ email, password });
-    if (error) alert(error.message);
-    else {
+    setLoading(true);
+
+    // ALTERADO: Enviando o user_type para o Supabase
+    const { error } = await supabase.auth.signUp({ 
+      email, 
+      password,
+      options: {
+        data: {
+          user_type: userType, // Salva se é candidato ou empresa
+          plano: 'free'        // Já define o plano inicial como gratuito
+        }
+      }
+    });
+
+    if (error) {
+      alert("Erro: " + error.message);
+    } else {
       alert('Cadastro realizado! Verifique seu e-mail para confirmar.');
       router.push('/login');
     }
+    setLoading(false);
   };
 
   return (
     <main style={{ backgroundColor: '#061224', minHeight: '100vh', width: '100%', position: 'relative', overflowX: 'hidden', display: 'flex', flexDirection: 'column' }}>
       
-      {/* BACKGROUND - ESCRITÓRIO/DOCUMENTOS */}
+      {/* BACKGROUND */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 0, display: 'flex', opacity: 0.4, pointerEvents: 'none' }}>
         <img 
           src="https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1200" 
@@ -35,20 +52,20 @@ export default function CadastroPage() {
       </div>
       <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(6, 18, 36, 0.85)', zIndex: 1 }}></div>
 
-      {/* HEADER - IDÊNTICO À HOME E LOGIN */}
+      {/* HEADER */}
       <header style={{ width: '100%', padding: '24px 60px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 50, position: 'relative', backgroundColor: 'rgba(6, 18, 36, 0.9)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
         <Link href="/">
            <img src={logoPath} alt="Logo" style={{ height: '65px', width: 'auto', display: 'block' }} />
         </Link>
         
         <nav style={{ display: 'flex', alignItems: 'center' }}>
-          <Link href="/" style={{ backgroundColor: '#1e3a8a', color: '#ffffff', padding: '12px 30px', borderRadius: '50px', fontWeight: 'bold', fontSize: '10px', textTransform: 'uppercase', textDecoration: 'none', letterSpacing: '2px' }}>Home</Link>
-          <Link href="/login" style={{ backgroundColor: '#1e3a8a', color: '#ffffff', padding: '12px 30px', borderRadius: '50px', fontWeight: 'bold', fontSize: '10px', textTransform: 'uppercase', textDecoration: 'none', letterSpacing: '2px', marginLeft: '80px' }}>Login</Link>
-          <Link href="/cadastro" style={{ backgroundColor: '#2563eb', color: '#ffffff', padding: '12px 30px', borderRadius: '50px', fontWeight: '900', fontSize: '10px', textTransform: 'uppercase', textDecoration: 'none', letterSpacing: '2px', marginLeft: '80px' }}>Criar Conta</Link>
+          <Link href="/" style={navButtonStyle}>Home</Link>
+          <Link href="/login" style={{...navButtonStyle, marginLeft: '80px'}}>Login</Link>
+          <Link href="/cadastro" style={{...navButtonStyle, backgroundColor: '#2563eb', fontWeight: '900', marginLeft: '80px'}}>Criar Conta</Link>
         </nav>
       </header>
 
-      {/* CENTRO */}
+      {/* CONTEÚDO CENTRAL */}
       <section style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10, position: 'relative', padding: '40px 20px' }}>
         
         <div style={{ textAlign: 'center', marginBottom: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -60,76 +77,58 @@ export default function CadastroPage() {
           <h2 style={{ color: '#3b82f6', fontWeight: '900', letterSpacing: '6px', fontSize: '18px', textTransform: 'uppercase' }}>CADASTRE-SE GRÁTIS</h2>
         </div>
 
-        {/* CARD DO FORMULÁRIO */}
         <form 
           onSubmit={handleCadastro} 
-          style={{ 
-            width: '100%', 
-            maxWidth: '400px', 
-            backgroundColor: 'rgba(255, 255, 255, 0.05)', 
-            backdropFilter: 'blur(20px)', 
-            padding: '40px', 
-            borderRadius: '30px', 
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 25px 50px rgba(0,0,0,0.5)'
-          }}
+          style={formCardStyle}
         >
           <h1 style={{ color: 'white', fontSize: '32px', fontWeight: '900', textAlign: 'center', marginBottom: '30px', letterSpacing: '-1px' }}>Criar Conta</h1>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            <input 
-              type="email" 
-              placeholder="SEU MELHOR E-MAIL" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={{ 
-                backgroundColor: '#ffffff', 
-                color: '#000000', 
-                padding: '15px 20px', 
-                borderRadius: '15px', 
-                border: 'none', 
-                outline: 'none', 
-                fontSize: '14px', 
-                fontWeight: 'bold' 
-              }} 
-            />
-            <input 
-              type="password" 
-              placeholder="CRIE UMA SENHA" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={{ 
-                backgroundColor: '#ffffff', 
-                color: '#000000', 
-                padding: '15px 20px', 
-                borderRadius: '15px', 
-                border: 'none', 
-                outline: 'none', 
-                fontSize: '14px', 
-                fontWeight: 'bold' 
-              }} 
-            />
+            
+            {/* CAMPO: TIPO DE CONTA (ITEM 5 DO DOC) */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <label style={labelStyle}>EU SOU:</label>
+              <select 
+                value={userType}
+                onChange={(e) => setUserType(e.target.value)}
+                required
+                style={inputStyle}
+              >
+                <option value="candidato">Candidato (Procuro Emprego)</option>
+                <option value="empresa">Empresa (Quero Contratar)</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <label style={labelStyle}>E-MAIL</label>
+              <input 
+                type="email" 
+                placeholder="SEU MELHOR E-MAIL" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                style={inputStyle} 
+              />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <label style={labelStyle}>SENHA</label>
+              <input 
+                type="password" 
+                placeholder="CRIE UMA SENHA" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                style={inputStyle} 
+              />
+            </div>
             
             <button 
               type="submit" 
-              style={{ 
-                backgroundColor: '#2563eb', 
-                color: '#ffffff', 
-                padding: '15px', 
-                borderRadius: '15px', 
-                border: 'none', 
-                fontWeight: '900', 
-                fontSize: '12px', 
-                textTransform: 'uppercase', 
-                letterSpacing: '2px', 
-                cursor: 'pointer',
-                marginTop: '10px',
-                boxShadow: '0 10px 20px rgba(37,99,235,0.3)'
-              }}
+              disabled={loading}
+              style={submitButtonStyle}
             >
-              FINALIZAR CADASTRO
+              {loading ? 'PROCESSANDO...' : 'FINALIZAR CADASTRO'}
             </button>
           </div>
 
@@ -142,10 +141,66 @@ export default function CadastroPage() {
         </form>
       </section>
 
-      {/* FOOTER */}
       <footer style={{ width: '100%', padding: '30px 0', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: 'auto' }}>
-        <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '2px' }}>© 2024 Contrata Empregos.</p>
+        <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '2px' }}>© 2026 Contrata Empregos.</p>
       </footer>
     </main>
   );
 }
+
+// ESTILOS REUTILIZÁVEIS
+const navButtonStyle: React.CSSProperties = {
+  backgroundColor: '#1e3a8a',
+  color: '#ffffff',
+  padding: '12px 30px',
+  borderRadius: '50px',
+  fontWeight: 'bold',
+  fontSize: '10px',
+  textTransform: 'uppercase',
+  textDecoration: 'none',
+  letterSpacing: '2px'
+};
+
+const formCardStyle: React.CSSProperties = {
+  width: '100%',
+  maxWidth: '400px',
+  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  backdropFilter: 'blur(20px)',
+  padding: '40px',
+  borderRadius: '30px',
+  border: '1px solid rgba(255, 255, 255, 0.1)',
+  boxShadow: '0 25px 50px rgba(0,0,0,0.5)'
+};
+
+const labelStyle: React.CSSProperties = {
+  fontSize: '10px',
+  fontWeight: '900',
+  color: '#3b82f6',
+  letterSpacing: '1px'
+};
+
+const inputStyle: React.CSSProperties = {
+  backgroundColor: '#ffffff',
+  color: '#000000',
+  padding: '15px 20px',
+  borderRadius: '15px',
+  border: 'none',
+  outline: 'none',
+  fontSize: '14px',
+  fontWeight: 'bold'
+};
+
+const submitButtonStyle: React.CSSProperties = {
+  backgroundColor: '#2563eb',
+  color: '#ffffff',
+  padding: '15px',
+  borderRadius: '15px',
+  border: 'none',
+  fontWeight: '900',
+  fontSize: '12px',
+  textTransform: 'uppercase',
+  letterSpacing: '2px',
+  cursor: 'pointer',
+  marginTop: '10px',
+  boxShadow: '0 10px 20px rgba(37,99,235,0.3)'
+};
