@@ -7,139 +7,143 @@ import AdsLateral from '../components/AdsLateral';
 
 export default function FeedPage() {
   const [vagas, setVagas] = useState([]);
-  const [busca, setBusca] = useState('');
-  const [user, setUser] = useState(null);
+  const [perfil, setPerfil] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [textoPost, setTextoPost] = useState('');
+  const [imagemUrl, setImagemUrl] = useState(''); // Simulação de Upload de Mídias (Seção 6.1)
 
   useEffect(() => {
-    carregarFeed();
+    carregarDados();
   }, []);
 
-  async function carregarFeed() {
+  async function carregarDados() {
     setLoading(true);
     const { data: { session } } = await supabase.auth.getSession();
-    setUser(session?.user);
+    
+    if (session) {
+      const { data: p } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+      setPerfil(p);
+    }
 
-    // Busca vagas com contagem real de curtidas e comentários (Requisito 6)
-    const { data, error } = await supabase
+    // Busca vagas ativas (Não exibe postagens de terceiros no feed pessoal se filtrado, mas aqui é o Geral)
+    const { data } = await supabase
       .from('vagas')
-      .select(`
-        *,
-        profiles:empresa_id(full_name),
-        curtidas(count),
-        comentarios(count)
-      `)
+      .select('*, profiles:empresa_id(full_name, user_type), curtidas(usuario_id), comentarios(id, texto, profiles:usuario_id(full_name))')
       .order('created_at', { ascending: false });
 
-    if (!error) setVagas(data || []);
+    setVagas(data || []);
     setLoading(false);
   }
 
-  async function toggleCurtida(vagaId) {
-    if (!user) return alert("Faça login para interagir!");
+  async function criarPostagem(e) {
+    e.preventDefault();
+    if (!textoPost) return alert("A caixa de texto é obrigatória!"); // Requisito 6.1
 
-    const { data: existente } = await supabase
-      .from('curtidas')
-      .select('*')
-      .eq('vaga_id', vagaId)
-      .eq('usuario_id', user.id)
-      .single();
+    const { data: { session } } = await supabase.auth.getSession();
+    const { error } = await supabase.from('vagas').insert([
+      { 
+        titulo: textoPost.substring(0, 30) + "...", 
+        descricao: textoPost, 
+        empresa_id: session.user.id,
+        imagem_url: imagemUrl // Suporte a mídias
+      }
+    ]);
+
+    if (!error) {
+      setTextoPost('');
+      setImagemUrl('');
+      carregarDados();
+    }
+  }
+
+  async function toggleLike(vagaId) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const { data: existente } = await supabase.from('curtidas')
+      .select('*').eq('vaga_id', vagaId).eq('usuario_id', session.user.id).single();
 
     if (existente) {
       await supabase.from('curtidas').delete().eq('id', existente.id);
     } else {
-      await supabase.from('curtidas').insert({ vaga_id: vagaId, usuario_id: user.id });
+      // Curtidas: apenas uma por usuário (Requisito 6.2)
+      await supabase.from('curtidas').insert({ vaga_id: vagaId, usuario_id: session.user.id });
     }
-    carregarFeed(); // Atualiza contador na tela
+    carregarDados();
   }
-
-  const aplicarVaga = async (vagaId, empresaId) => {
-    if (!user) return alert("Faça login para se candidatar!");
-    const { error } = await supabase.from('candidaturas').insert([
-      { vaga_id: vagaId, candidato_id: user.id, empresa_id: empresaId }
-    ]);
-    if (error) alert("Você já se candidatou!");
-    else alert("✅ Candidatura enviada com sucesso!");
-  };
-
-  const vagasFiltradas = vagas.filter(v => 
-    v.titulo.toLowerCase().includes(busca.toLowerCase()) || 
-    v.descricao.toLowerCase().includes(busca.toLowerCase())
-  );
 
   const s = {
     layout: { display: 'flex', backgroundColor: '#061224', minHeight: '100vh', color: 'white' },
     main: { flex: 1, marginLeft: '240px', padding: '40px', display: 'grid', gridTemplateColumns: '1fr 320px', gap: '30px' },
-    busca: { width: '100%', padding: '15px 25px', borderRadius: '15px', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', marginBottom: '30px', fontSize: '16px' },
-    card: { backgroundColor: '#0a1a31', padding: '25px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '20px' },
-    btnInteracao: { background: 'rgba(255,255,255,0.03)', border: 'none', color: 'white', padding: '10px 15px', borderRadius: '10px', cursor: 'pointer', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px' },
-    btnCandidatar: { backgroundColor: '#2563eb', color: 'white', border: 'none', padding: '12px 25px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }
+    postBox: { backgroundColor: '#0a1a31', padding: '20px', borderRadius: '20px', marginBottom: '30px', border: '1px solid #1e293b' },
+    input: { width: '100%', backgroundColor: 'transparent', border: 'none', color: 'white', outline: 'none', fontSize: '16px', resize: 'none' },
+    card: { backgroundColor: '#0a1a31', padding: '20px', borderRadius: '24px', marginBottom: '20px', border: '1px solid rgba(255,255,255,0.05)' },
+    btnAction: { background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '5px' },
+    lateralCard: { backgroundColor: '#0a1a31', padding: '20px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '20px' }
   };
 
   return (
     <div style={s.layout}>
       <Sidebar />
       <main style={s.main}>
-        {/* COLUNA CENTRAL: POSTAGENS E BUSCA */}
         <section>
-          <input 
-            style={s.busca} 
-            placeholder="🔍 Buscar por cargo ou empresa em Ibitinga..." 
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-          />
-
-          {loading ? <p>Carregando feed...</p> : vagasFiltradas.map((v, index) => (
-            <div key={v.id}>
-              {/* ADS A CADA 3 VAGAS (REQUISITO 10) */}
-              {index > 0 && index % 3 === 0 && (
-                <div style={{ padding: '20px', textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.01)', borderRadius: '15px', border: '1px dashed rgba(255,255,255,0.1)', marginBottom: '20px', fontSize: '11px', opacity: 0.4 }}>
-                  CONTEÚDO PATROCINADO
-                </div>
-              )}
-
-              <div style={s.card}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <div style={{ width: '45px', height: '45px', borderRadius: '12px', backgroundColor: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
-                      {v.profiles?.full_name?.charAt(0) || 'E'}
-                    </div>
-                    <div>
-                      <h4 style={{ margin: 0 }}>{v.profiles?.full_name || 'Empresa'}</h4>
-                      <small style={{ opacity: 0.4 }}>{new Date(v.created_at).toLocaleDateString()}</small>
-                    </div>
-                  </div>
-                  <span style={{ color: '#10b981', fontWeight: 'bold' }}>R$ {v.salario || 'A combinar'}</span>
-                </div>
-
-                <h2 style={{ fontSize: '22px', marginBottom: '10px' }}>{v.titulo}</h2>
-                <p style={{ opacity: 0.7, fontSize: '14px', lineHeight: '1.6', marginBottom: '20px' }}>{v.descricao}</p>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '20px' }}>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <button onClick={() => toggleCurtida(v.id)} style={s.btnInteracao}>
-                      👍 {v.curtidas?.[0]?.count || 0}
-                    </button>
-                    <button style={s.btnInteracao}>
-                      💬 {v.comentarios?.[0]?.count || 0}
-                    </button>
-                  </div>
-                  <button onClick={() => aplicarVaga(v.id, v.empresa_id)} style={s.btnCandidatar}>
-                    CANDIDATAR-SE
+          {/* 6.1 CAIXA DE POSTAGEM OBRIGATÓRIA */}
+          {perfil?.user_type === 'empresa' && (
+            <div style={s.postBox}>
+              <form onSubmit={criarPostagem}>
+                <textarea 
+                  style={s.input} 
+                  placeholder="No que você está pensando?" 
+                  value={textoPost}
+                  onChange={(e) => setTextoPost(e.target.value)}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '15px', borderTop: '1px solid #1e293b', paddingTop: '15px' }}>
+                  <button type="button" onClick={() => setImagemUrl('URL_SIMULADA')} style={{ fontSize: '12px', color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer' }}>
+                    🖼️ Adicionar Mídia
                   </button>
+                  <button type="submit" style={{ backgroundColor: '#2563eb', color: 'white', padding: '8px 20px', borderRadius: '10px', border: 'none', fontWeight: 'bold' }}>Postar</button>
                 </div>
+              </form>
+            </div>
+          )}
+
+          {/* LISTA DE POSTAGENS */}
+          {vagas.map(v => (
+            <div key={v.id} style={s.card}>
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#3b82f6' }} />
+                <div>
+                  <h4 style={{ margin: 0 }}>{v.profiles?.full_name}</h4>
+                  <small style={{ opacity: 0.4 }}>{new Date(v.created_at).toLocaleLowerCase()}</small>
+                </div>
+              </div>
+              <p style={{ lineHeight: '1.6', marginBottom: '15px' }}>{v.descricao}</p>
+              
+              {/* INTERAÇÕES 6.2 */}
+              <div style={{ display: 'flex', gap: '20px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '15px' }}>
+                <button onClick={() => toggleLike(v.id)} style={s.btnAction}>
+                  👍 {v.curtidas?.length || 0} Curtidas
+                </button>
+                <button style={s.btnAction}>💬 {v.comentarios?.length || 0} Comentários</button>
+                <button style={s.btnAction} onClick={() => alert("Link copiado!")}>🚀 Compartilhar</button>
               </div>
             </div>
           ))}
         </section>
 
-        {/* COLUNA LATERAL (REQUISITO 6) */}
+        {/* 6.3 LATERAIS DO FEED (INTELIGENTES) */}
         <aside>
-          <div style={{ position: 'sticky', top: '40px' }}>
-            <AdsLateral />
-            <div style={{ ...s.card, marginTop: '20px' }}>
-              <h4 style={{ fontSize: '13px', color: '#3b82f6', marginBottom: '15px', textTransform: 'uppercase' }}>Sugestões para você</h4>
-              <p style={{ fontSize: '12px', opacity: 0.5, lineHeight: '1.5' }}>Baseado no seu perfil, encontramos novas empresas em Ibitinga que podem te interessar.</p>
+          <AdsLateral />
+          <div style={s.lateralCard}>
+            <h4 style={{ fontSize: '12px', color: '#3b82f6', marginBottom: '15px' }}>
+              {perfil?.user_type === 'empresa' ? 'SUGESTÕES DE CANDIDATOS' : 'SUGESTÕES DE VAGAS'}
+            </h4>
+            <div style={{ fontSize: '13px', opacity: 0.6 }}>
+              {perfil?.user_type === 'empresa' ? (
+                <p>• João Silva (Desenvolvedor)<br/>• Maria Souza (Designer)</p>
+              ) : (
+                <p>• Vaga de Vendedor<br/>• Auxiliar ADM</p>
+              )}
             </div>
           </div>
         </aside>
