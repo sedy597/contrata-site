@@ -8,105 +8,126 @@ import Link from 'next/link';
 
 export default function PerfilPage() {
   const [loading, setLoading] = useState(true);
+  const [editando, setEditando] = useState(false);
   const [user, setUser] = useState(null);
-  const [perfil, setPerfil] = useState({});
+  const [perfil, setPerfil] = useState({ full_name: '', bio: '', telefone: '', user_type: '' });
   const [vagasMinhas, setVagasMinhas] = useState([]);
   const [inscritos, setInscritos] = useState([]);
   const router = useRouter();
 
   useEffect(() => {
-    carregarDadosConsolidados();
+    carregarTudo();
   }, []);
 
-  async function carregarDadosConsolidados() {
+  async function carregarTudo() {
     setLoading(true);
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return router.push('/login');
     setUser(session.user);
 
-    // 1. Dados do Perfil (Nome, Bio, etc)
     const { data: prof } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
     if (prof) setPerfil(prof);
 
-    // 2. Vagas que eu postei (Se for empresa)
     const { data: vgs } = await supabase.from('vagas').select('*').eq('empresa_id', session.user.id).order('created_at', { ascending: false });
     setVagasMinhas(vgs || []);
 
-    // 3. Candidatos que se aplicaram às minhas vagas
-    const { data: cands } = await supabase
-      .from('candidaturas')
+    const { data: cands } = await supabase.from('candidaturas')
       .select(`id, vagas(titulo), profiles:candidato_id(full_name, telefone, curriculo_url)`)
       .eq('empresa_id', session.user.id);
     setInscritos(cands || []);
-
     setLoading(false);
   }
 
-  const excluirVaga = async (id) => {
-    if (confirm("Excluir esta vaga permanentemente?")) {
-      await supabase.from('vagas').delete().eq('id', id);
-      carregarDadosConsolidados();
+  async function salvarPerfil() {
+    const { error } = await supabase.from('profiles').update({
+      full_name: perfil.full_name,
+      bio: perfil.bio,
+      telefone: perfil.telefone
+    }).eq('id', user.id);
+    
+    if (!error) { alert("Dados atualizados!"); setEditando(false); carregarTudo(); }
+  }
+
+  async function deletarConta() {
+    if (confirm("⚠️ AVISO CRÍTICO: Deseja excluir sua conta permanentemente? Todas as suas vagas e dados serão apagados (Conformidade LGPD).")) {
+      await supabase.from('profiles').delete().eq('id', user.id);
+      await supabase.auth.signOut();
+      router.push('/login');
     }
-  };
+  }
 
   const s = {
     layout: { display: 'flex', backgroundColor: '#061224', minHeight: '100vh', color: 'white' },
     main: { flex: 1, marginLeft: '240px', padding: '40px' },
-    header: { backgroundColor: '#0a1a31', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '30px' },
-    badge: { backgroundColor: '#2563eb', color: 'white', padding: '5px 12px', borderRadius: '50px', fontSize: '10px', fontWeight: 'bold', width: 'fit-content', marginBottom: '10px' },
-    grid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' },
-    card: { backgroundColor: '#0a1a31', padding: '20px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' },
-    btnCV: { backgroundColor: '#10b981', color: 'white', padding: '6px 12px', borderRadius: '8px', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold' }
+    card: { backgroundColor: '#0a1a31', padding: '30px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '25px' },
+    input: { width: '100%', padding: '12px', backgroundColor: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: 'white', marginBottom: '15px' },
+    btnPrimary: { backgroundColor: '#2563eb', color: 'white', padding: '10px 20px', borderRadius: '10px', fontWeight: 'bold', border: 'none', cursor: 'pointer' },
+    btnDelete: { color: '#ef4444', background: 'none', border: '1px solid #ef4444', padding: '8px 15px', borderRadius: '8px', cursor: 'pointer', fontSize: '11px', marginTop: '20px' }
   };
 
   return (
     <div style={s.layout}>
       <Sidebar />
       <main style={s.main}>
-        {loading ? <p>Sincronizando todos os dados...</p> : (
+        {loading ? <p>Carregando painel de controle...</p> : (
           <>
-            {/* CABEÇALHO COM BIO E NOME */}
-            <header style={s.header}>
-              <div style={s.badge}>{perfil.user_type?.toUpperCase()}</div>
-              <h1 style={{ fontSize: '32px', fontWeight: '900' }}>{perfil.full_name || 'Usuário'}</h1>
-              <p style={{ opacity: 0.5 }}>{user?.email}</p>
-              {perfil.bio && <p style={{ marginTop: '15px', color: '#cbd5e1', fontStyle: 'italic' }}>"{perfil.bio}"</p>}
-              
-              <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                <Link href="/planos" style={{ backgroundColor: '#facc15', color: 'black', padding: '10px 20px', borderRadius: '10px', fontWeight: 'bold', textDecoration: 'none', fontSize: '13px' }}>👑 UPGRADE</Link>
-                <Link href="/sac" style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'white', padding: '10px 20px', borderRadius: '10px', fontWeight: 'bold', textDecoration: 'none', fontSize: '13px', border: '1px solid rgba(255,255,255,0.1)' }}>🎧 SUPORTE</Link>
+            <section style={s.card}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ backgroundColor: '#3b82f6', padding: '4px 10px', borderRadius: '50px', fontSize: '10px', fontWeight: 'bold' }}>
+                  CONTA {perfil.user_type?.toUpperCase()}
+                </span>
+                <button onClick={() => setEditando(!editando)} style={{ color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>
+                  {editando ? 'CANCELAR' : 'EDITAR PERFIL'}
+                </button>
               </div>
-            </header>
 
-            <div style={s.grid}>
-              {/* COLUNA 1: MINHAS VAGAS */}
-              <section>
-                <h2 style={{ fontSize: '18px', marginBottom: '15px' }}>GESTÃO DE VAGAS</h2>
+              {editando ? (
+                <div style={{ marginTop: '20px' }}>
+                  <input style={s.input} value={perfil.full_name} onChange={e => setPerfil({...perfil, full_name: e.target.value})} placeholder="Nome Completo" />
+                  <textarea style={{...s.input, height: '80px'}} value={perfil.bio} onChange={e => setPerfil({...perfil, bio: e.target.value})} placeholder="Sua Bio" />
+                  <input style={s.input} value={perfil.telefone} onChange={e => setPerfil({...perfil, telefone: e.target.value})} placeholder="Telefone/WhatsApp" />
+                  <button onClick={salvarPerfil} style={s.btnPrimary}>SALVAR ALTERAÇÕES</button>
+                </div>
+              ) : (
+                <div style={{ marginTop: '20px' }}>
+                  <h1 style={{ fontSize: '32px', fontWeight: '900', margin: 0 }}>{perfil.full_name || 'Seu Nome'}</h1>
+                  <p style={{ opacity: 0.5 }}>{user?.email}</p>
+                  <p style={{ marginTop: '15px', color: '#cbd5e1' }}>{perfil.bio || 'Sem bio definida.'}</p>
+                </div>
+              )}
+            </section>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <div style={s.card}>
+                <h3 style={{ fontSize: '16px', marginBottom: '20px' }}>MINHAS VAGAS</h3>
                 {vagasMinhas.map(v => (
-                  <div key={v.id} style={{ ...s.card, marginBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>{v.titulo}</span>
-                    <button onClick={() => excluirVaga(v.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px' }}>EXCLUIR</button>
+                  <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <span style={{fontSize: '14px'}}>{v.titulo}</span>
+                    <button onClick={async () => { await supabase.from('vagas').delete().eq('id', v.id); carregarTudo(); }} style={{color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer', fontSize: '11px'}}>EXCLUIR</button>
                   </div>
                 ))}
-              </section>
+              </div>
 
-              {/* COLUNA 2: CANDIDATOS (O que o documento exige) */}
-              <section>
-                <h2 style={{ fontSize: '18px', marginBottom: '15px' }}>CANDIDATOS INTERESSADOS</h2>
+              <div style={s.card}>
+                <h3 style={{ fontSize: '16px', marginBottom: '20px' }}>CANDIDATOS</h3>
                 {inscritos.map(i => (
-                  <div key={i.id} style={{ ...s.card, marginBottom: '10px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <p style={{ margin: 0, fontWeight: 'bold' }}>{i.profiles?.full_name}</p>
-                        <p style={{ margin: 0, fontSize: '11px', opacity: 0.5 }}>Vaga: {i.vagas?.titulo}</p>
-                      </div>
-                      {i.profiles?.curriculo_url && (
-                        <a href={i.profiles.curriculo_url} target="_blank" style={s.btnCV}>VER CV</a>
-                      )}
+                  <div key={i.id} style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <p style={{ margin: 0, fontSize: '14px', fontWeight: 'bold' }}>{i.profiles?.full_name}</p>
+                      <p style={{ margin: 0, fontSize: '11px', opacity: 0.5 }}>{i.vagas?.titulo}</p>
                     </div>
+                    {i.profiles?.curriculo_url && <a href={i.profiles.curriculo_url} target="_blank" style={{ color: '#10b981', fontSize: '11px', fontWeight: 'bold' }}>VER CV</a>}
                   </div>
                 ))}
-              </section>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px' }}>
+              <div style={{ display: 'flex', gap: '15px' }}>
+                <Link href="/planos" style={{ color: '#facc15', fontSize: '12px', fontWeight: 'bold' }}>👑 Planos</Link>
+                <Link href="/sac" style={{ color: '#3b82f6', fontSize: '12px', fontWeight: 'bold' }}>🎧 Suporte</Link>
+              </div>
+              <button onClick={deletarConta} style={s.btnDelete}>EXCLUIR MINHA CONTA</button>
             </div>
           </>
         )}
