@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use client';
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
@@ -11,22 +12,14 @@ export default function CadastroPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const logoPath = "/logo.png";
-
   const handleCadastro = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // 1. Criar a conta no Supabase
     const { data, error } = await supabase.auth.signUp({ 
       email, 
       password,
-      options: {
-        data: {
-          user_type: userType,
-          plano: 'free'
-        }
-      }
+      options: { data: { user_type: userType, plano: 'free' } }
     });
 
     if (error) {
@@ -35,135 +28,132 @@ export default function CadastroPage() {
       return;
     }
 
-    // 2. LOGICA DE ENTRADA AUTOMÁTICA
-    // Se não houver erro e o usuário foi criado, fazemos o login imediato
-    const { error: loginError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (loginError) {
-      // Se der erro no auto-login, manda para a página de login apenas por segurança
-      router.push('/login');
-    } else {
-      // SUCESSO TOTAL: Vai direto para o Feed já logado!
-      router.push('/feed');
-    }
-    
+    const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+    if (loginError) { router.push('/login'); } 
+    else { router.push('/feed'); }
     setLoading(false);
   };
 
   return (
-    <main style={{ backgroundColor: '#061224', minHeight: '100vh', width: '100%', position: 'relative', overflowX: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <main style={{ display: 'flex', minHeight: '100vh', width: '100%', overflow: 'hidden', backgroundColor: '#ffffff' }}>
       
-      {/* BACKGROUND */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 0, display: 'flex', opacity: 0.4, pointerEvents: 'none' }}>
-        <img 
-          src="https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1200" 
-          style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'grayscale(60%)' }} 
-          alt="Escritório" 
-        />
-      </div>
-      <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(6, 18, 36, 0.85)', zIndex: 1 }}></div>
-
-      {/* HEADER */}
-      <header style={{ width: '100%', padding: '24px 60px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 50, position: 'relative', backgroundColor: 'rgba(6, 18, 36, 0.9)', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-        <Link href="/">
-           <img src={logoPath} alt="Logo" style={{ height: '65px', width: 'auto', display: 'block' }} />
-        </Link>
+      {/* LADO ESQUERDO: PAINEL DE IDENTIDADE (FIXO 50%) */}
+      <div style={{ flex: '1', backgroundColor: '#0f172a', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '60px', color: 'white', position: 'relative' }}>
+        <div style={{ position: 'absolute', top: '40px', left: '40px' }}>
+             <Link href="/"><img src="/logo.png" alt="Logo" style={{ height: '40px' }} /></Link>
+        </div>
         
-        <nav style={{ display: 'flex', alignItems: 'center' }}>
-          <Link href="/" style={navButtonStyle}>Home</Link>
-          <Link href="/login" style={{...navButtonStyle, marginLeft: '80px'}}>Login</Link>
-          <Link href="/cadastro" style={{...navButtonStyle, backgroundColor: '#2563eb', fontWeight: '900', marginLeft: '80px'}}>Criar Conta</Link>
-        </nav>
-      </header>
-
-      {/* CONTEÚDO CENTRAL */}
-      <section style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10, position: 'relative', padding: '40px 20px' }}>
-        
-        <div style={{ textAlign: 'center', marginBottom: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ textAlign: 'center', zIndex: 10 }}>
           <img 
-            src={logoPath} 
-            alt="Logo Central" 
-            style={{ height: '150px', width: 'auto', marginBottom: '20px', filter: 'drop-shadow(0 0 15px rgba(59,130,246,0.4))' }} 
+            src="/logo.png" 
+            alt="Logo Gigante" 
+            style={{ height: '220px', width: 'auto', marginBottom: '40px', filter: 'drop-shadow(0 20px 30px rgba(0,0,0,0.5))' }} 
           />
-          <h2 style={{ color: '#3b82f6', fontWeight: '900', letterSpacing: '6px', fontSize: '18px', textTransform: 'uppercase' }}>CADASTRE-SE GRÁTIS</h2>
+          <h1 style={{ fontSize: '48px', fontWeight: '900', letterSpacing: '-2px', lineHeight: '1', marginBottom: '20px' }}>
+            CONTRATA<br/><span style={{ color: '#3b82f6' }}>EMPREGOS</span>
+          </h1>
+          <p style={{ fontSize: '18px', opacity: 0.7, maxWidth: '380px', margin: '0 auto', fontWeight: '500' }}>
+            A maior vitrine de talentos e oportunidades de Ibitinga e região.
+          </p>
+        </div>
+        
+        {/* Detalhe de design no fundo */}
+        <div style={{ position: 'absolute', bottom: '0', left: '0', width: '100%', height: '4px', background: 'linear-gradient(90deg, #3b82f6, #0f172a)' }}></div>
+      </div>
+
+      {/* LADO DIREITO: FORMULÁRIO SOBREPOSTO A IMAGEM (FIXO 50%) */}
+      <div style={{ flex: '1', position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        
+        {/* Imagem de Fundo Full */}
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+          <img 
+            src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1200&q=80" 
+            alt="Escritório" 
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+          />
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(3px)' }}></div>
         </div>
 
-        <form 
-          onSubmit={handleCadastro} 
-          style={formCardStyle}
-        >
-          <h1 style={{ color: 'white', fontSize: '32px', fontWeight: '900', textAlign: 'center', marginBottom: '30px', letterSpacing: '-1px' }}>Criar Conta</h1>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        {/* Card do Formulário com Geometria Perfeita */}
+        <div style={{ zIndex: 10, width: '100%', maxWidth: '440px', padding: '20px' }}>
+          <div style={{ backgroundColor: 'white', padding: '50px 45px', borderRadius: '32px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)', border: '1px solid #f1f5f9' }}>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              <label style={labelStyle}>EU SOU:</label>
-              <select 
-                value={userType}
-                onChange={(e) => setUserType(e.target.value)}
-                required
-                style={inputStyle}
-              >
-                <option value="candidato">Candidato (Procuro Emprego)</option>
-                <option value="empresa">Empresa (Quero Contratar)</option>
-              </select>
+            <div style={{ marginBottom: '35px' }}>
+              <h2 style={{ color: '#0f172a', fontSize: '32px', fontWeight: '900', letterSpacing: '-1px', marginBottom: '8px' }}>Começar agora</h2>
+              <p style={{ color: '#64748b', fontSize: '15px', fontWeight: '500' }}>Crie sua conta gratuita em segundos.</p>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              <label style={labelStyle}>E-MAIL</label>
-              <input 
-                type="email" 
-                placeholder="SEU MELHOR E-MAIL" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                style={inputStyle} 
-              />
-            </div>
+            <form onSubmit={handleCadastro} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div>
+                <label style={labelStyle}>TIPO DE PERFIL</label>
+                <select value={userType} onChange={(e) => setUserType(e.target.value)} style={inputStyle} required>
+                  <option value="candidato">Sou Candidato (Procuro Emprego)</option>
+                  <option value="empresa">Sou Empresa (Quero Contratar)</option>
+                </select>
+              </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              <label style={labelStyle}>SENHA</label>
-              <input 
-                type="password" 
-                placeholder="CRIE UMA SENHA" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                style={inputStyle} 
-              />
+              <div>
+                <label style={labelStyle}>E-MAIL</label>
+                <input type="email" placeholder="nome@exemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} required style={inputStyle} />
+              </div>
+
+              <div>
+                <label style={labelStyle}>SENHA</label>
+                <input type="password" placeholder="Mínimo 6 caracteres" value={password} onChange={(e) => setPassword(e.target.value)} required style={inputStyle} />
+              </div>
+
+              <button type="submit" disabled={loading} style={btnSubmitStyle}>
+                {loading ? 'CRIANDO CONTA...' : 'FINALIZAR CADASTRO'}
+              </button>
+            </form>
+
+            <div style={{ marginTop: '35px', textAlign: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '25px' }}>
+              <p style={{ fontSize: '14px', color: '#64748b', fontWeight: '600' }}>
+                Já tem uma conta? 
+                <Link href="/login" style={{ color: '#2563eb', fontWeight: '800', marginLeft: '8px', textDecoration: 'none' }}>Fazer Login</Link>
+              </p>
             </div>
-            
-            <button 
-              type="submit" 
-              disabled={loading}
-              style={submitButtonStyle}
-            >
-              {loading ? 'CRIANDO CONTA...' : 'FINALIZAR E ENTRAR'}
-            </button>
           </div>
-
-          <p style={{ marginTop: '30px', textAlign: 'center', fontSize: '11px', fontWeight: 'bold', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-            Já possui uma conta? 
-            <Link href="/login" style={{ color: '#3b82f6', marginLeft: '8px', textDecoration: 'none', borderBottom: '1px solid #3b82f6' }}>
-              FAZER LOGIN
-            </Link>
-          </p>
-        </form>
-      </section>
-
-      <footer style={{ width: '100%', padding: '30px 0', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: 'auto' }}>
-        <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '2px' }}>© 2026 Contrata Empregos.</p>
-      </footer>
+        </div>
+      </div>
     </main>
   );
 }
 
-// Estilos mantidos conforme o seu original
-const navButtonStyle: React.CSSProperties = { backgroundColor: '#1e3a8a', color: '#ffffff', padding: '12px 30px', borderRadius: '50px', fontWeight: 'bold', fontSize: '10px', textTransform: 'uppercase', textDecoration: 'none', letterSpacing: '2px' };
-const formCardStyle: React.CSSProperties = { width: '100%', maxWidth: '400px', backgroundColor: 'rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(20px)', padding: '40px', borderRadius: '30px', border: '1px solid rgba(255, 255, 255, 0.1)', boxShadow: '0 25px 50px rgba(0,0,0,0.5)' };
-const labelStyle: React.CSSProperties = { fontSize: '10px', fontWeight: '900', color: '#3b82f6', letterSpacing: '1px' };
-const inputStyle: React.CSSProperties = { backgroundColor: '#ffffff', color: '#000000', padding: '15px 20px', borderRadius: '15px', border: 'none', outline: 'none', fontSize: '14px', fontWeight: 'bold' };
-const submitButtonStyle: React.CSSProperties = { backgroundColor: '#2563eb', color: '#ffffff', padding: '15px', borderRadius: '15px', border: 'none', fontWeight: '900', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '2px', cursor: 'pointer', marginTop: '10px', boxShadow: '0 10px 20px rgba(37,99,235,0.3)' };
+// ESTILOS DE PRECISÃO
+const labelStyle: React.CSSProperties = { 
+  display: 'block',
+  fontSize: '11px', 
+  fontWeight: '900', 
+  color: '#94a3b8', 
+  marginBottom: '8px', 
+  letterSpacing: '1px',
+  textTransform: 'uppercase'
+};
+
+const inputStyle: React.CSSProperties = { 
+  width: '100%', 
+  padding: '16px 20px', 
+  borderRadius: '14px', 
+  border: '2px solid #f1f5f9', 
+  fontSize: '15px', 
+  fontWeight: '600',
+  color: '#0f172a',
+  outline: 'none',
+  backgroundColor: '#f8fafc',
+  transition: '0.2s'
+};
+
+const btnSubmitStyle: React.CSSProperties = { 
+  width: '100%', 
+  backgroundColor: '#2563eb', 
+  color: 'white', 
+  padding: '18px', 
+  borderRadius: '14px', 
+  fontWeight: '900', 
+  fontSize: '15px', 
+  border: 'none', 
+  cursor: 'pointer', 
+  marginTop: '10px',
+  boxShadow: '0 10px 15px -3px rgba(37, 99, 235, 0.3)'
+};

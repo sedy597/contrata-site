@@ -1,16 +1,17 @@
-import React from 'react';
-import Sidebar from './components/Sidebar'; 
+export const metadata = {
+  title: 'Contrata Empregos',
+  description: 'A maior plataforma de empregos do Brasil',
+};
 
-export default function RootLayout({ children }: { children: any }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="pt-br">
-      <body style={{ margin: 0, backgroundColor: '#061224', color: 'white' }}>
-        <div style={{ display: 'flex', minHeight: '100vh' }}>
-          <Sidebar />
-          <main style={{ flex: 1, marginLeft: '240px', backgroundColor: '#061224' }}>
-            {children}
-          </main>
-        </div>
+    <html lang="pt-BR">
+      <body style={{ margin: 0, padding: 0, boxSizing: 'border-box', overflowX: 'hidden', backgroundColor: '#f8fafc' }}>
+        {children}
       </body>
     </html>
   );
