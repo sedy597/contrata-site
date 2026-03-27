@@ -23,7 +23,7 @@ export default function AguardePage() {
   return (
     <main style={containerStyle}>
       
-      {/* COLUNA ESQUERDA - TEXTOS E FORMULÁRIO */}
+      {/* COLUNA ESQUERDA - TEXTOS E FORMULÁRIO (Aumentado) */}
       <section style={leftSection}>
         <div style={contentWrapper}>
           
@@ -62,13 +62,14 @@ export default function AguardePage() {
         </div>
       </section>
 
-      {/* COLUNA DIREITA */}
+      {/* COLUNA DIREITA (Tamanho original) */}
       <section style={rightSection}></section>
 
     </main>
   );
 }
 
+// ESTILOS AJUSTADOS PARA TAMANHOS GIGANTES
 const containerStyle: React.CSSProperties = { 
   display: 'flex', 
   minHeight: '100vh', 
@@ -79,17 +80,17 @@ const containerStyle: React.CSSProperties = {
 };
 
 const leftSection: React.CSSProperties = { 
-  flex: '1', 
+  flex: '1.5', // AUMENTADO PARA DAR MAIS ESPAÇO À ESQUERDA
   display: 'flex', 
   flexDirection: 'column', 
   justifyContent: 'center', 
   alignItems: 'center', 
-  padding: '40px', 
+  padding: '60px', // AUMENTADO
   backgroundColor: '#fff' 
 };
 
 const rightSection: React.CSSProperties = { 
-  flex: '1.2', 
+  flex: '1', // DIMINUÍDO PROPORCIONALMENTE
   backgroundImage: 'url("https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2000")', 
   backgroundSize: 'cover', 
   backgroundPosition: 'center', 
@@ -97,7 +98,7 @@ const rightSection: React.CSSProperties = {
 };
 
 const contentWrapper: React.CSSProperties = { 
-  maxWidth: '550px', 
+  maxWidth: '800px', // AUMENTADO SIGNIFICATIVAMENTE
   width: '100%',
   display: 'flex',
   flexDirection: 'column',
@@ -105,35 +106,35 @@ const contentWrapper: React.CSSProperties = {
 };
 
 const logoStyle: React.CSSProperties = { 
-  height: '140px', // AUMENTADO PARA 140PX
-  marginBottom: '40px', 
+  height: '220px', // AUMENTADO PARA GIGANTE
+  marginBottom: '60px', // AUMENTADO
   objectFit: 'contain' 
 };
 
 const titleStyle: React.CSSProperties = { 
-  fontSize: '28px', // AUMENTADO
+  fontSize: '42px', // AUMENTADO SIGNIFICATIVAMENTE
   fontWeight: '800', 
   color: '#262626', 
   lineHeight: '1.2', 
-  marginBottom: '15px', 
+  marginBottom: '20px', 
   textAlign: 'center'
 };
 
 const brandNameStyle: React.CSSProperties = { 
-  fontSize: '24px', 
+  fontSize: '36px', // AUMENTADO
   fontWeight: '900', 
   color: '#2563eb', 
-  marginBottom: '30px', 
+  marginBottom: '50px', // AUMENTADO
   textAlign: 'center'
 };
 
 const arrowWrapper: React.CSSProperties = { 
   textAlign: 'center', 
-  marginBottom: '30px' 
+  marginBottom: '50px' 
 };
 
 const arrowIcon: React.CSSProperties = { 
-  fontSize: '40px', 
+  fontSize: '60px', // AUMENTADO
   color: '#262626', 
   fontWeight: '100'
 };
@@ -141,16 +142,16 @@ const arrowIcon: React.CSSProperties = {
 const formStyle: React.CSSProperties = { 
   display: 'flex', 
   flexDirection: 'column', 
-  gap: '15px', 
-  width: '400px', // AUMENTADO
-  maxWidth: '100%' 
+  gap: '20px', 
+  width: '100%', // AUMENTADO PARA OCUPAR TODO O WRAPPER SE NECESSÁRIO
+  maxWidth: '600px' // AUMENTADO
 };
 
 const inputStyle: React.CSSProperties = { 
-  padding: '20px', // AUMENTADO
+  padding: '25px', // AUMENTADO
   borderRadius: '50px', 
-  border: '1.5px solid #f1f5f9', 
-  fontSize: '16px', 
+  border: '2px solid #f1f5f9', // MAIS GROSSO
+  fontSize: '20px', // AUMENTADO
   fontWeight: '600', 
   outline: 'none', 
   textAlign: 'center',
@@ -161,19 +162,20 @@ const inputStyle: React.CSSProperties = {
 const btnStyle: React.CSSProperties = { 
   backgroundColor: '#262626', 
   color: 'white', 
-  padding: '22px 30px', // AUMENTADO
+  padding: '28px 40px', // AUMENTADO
   borderRadius: '50px', 
   border: 'none', 
   fontWeight: '900', 
-  fontSize: '16px', // AUMENTADO
+  fontSize: '20px', // AUMENTADO
   cursor: 'pointer', 
   textTransform: 'uppercase',
-  boxShadow: '0 10px 25px rgba(0,0,0,0.15)'
+  boxShadow: '0 15px 35px rgba(0,0,0,0.2)' // MAIS FORTE
 };
 
 const successBox: React.CSSProperties = { 
-  width: '400px', 
-  padding: '20px', 
+  width: '100%', 
+  maxWidth: '600px', 
+  padding: '25px', 
   textAlign: 'center', 
   backgroundColor: '#f0fdf4', 
   borderRadius: '20px', 
