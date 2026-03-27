@@ -62,14 +62,13 @@ export default function AguardePage() {
         </div>
       </section>
 
-      {/* COLUNA DIREITA - NOVA IMAGEM CORPORATIVA NEUTRA */}
+      {/* COLUNA DIREITA */}
       <section style={rightSection}></section>
 
     </main>
   );
 }
 
-// ESTILOS DE ELITE (Fiel ao design original, com nova foto)
 const containerStyle: React.CSSProperties = { 
   display: 'flex', 
   minHeight: '100vh', 
@@ -83,7 +82,7 @@ const leftSection: React.CSSProperties = {
   flex: '1', 
   display: 'flex', 
   flexDirection: 'column', 
-  justifyContent: 'center', // Centraliza verticalmente
+  justifyContent: 'center', 
   alignItems: 'center', 
   padding: '40px', 
   backgroundColor: '#fff' 
@@ -91,67 +90,67 @@ const leftSection: React.CSSProperties = {
 
 const rightSection: React.CSSProperties = { 
   flex: '1.2', 
-  backgroundImage: 'url("https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2000")', // Nova foto: Casal corporativo profissional e neutro
+  backgroundImage: 'url("https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2000")', 
   backgroundSize: 'cover', 
   backgroundPosition: 'center', 
   display: 'block' 
 };
 
 const contentWrapper: React.CSSProperties = { 
-  maxWidth: '480px', 
+  maxWidth: '550px', 
   width: '100%',
   display: 'flex',
   flexDirection: 'column',
-  alignItems: 'center' // Centraliza horizontalmente o conteúdo
+  alignItems: 'center'
 };
 
 const logoStyle: React.CSSProperties = { 
-  height: '90px', 
-  marginBottom: '50px', // Espaço entre a logo e o texto
+  height: '140px', // AUMENTADO PARA 140PX
+  marginBottom: '40px', 
   objectFit: 'contain' 
 };
 
 const titleStyle: React.CSSProperties = { 
-  fontSize: '26px', 
+  fontSize: '28px', // AUMENTADO
   fontWeight: '800', 
   color: '#262626', 
   lineHeight: '1.2', 
   marginBottom: '15px', 
-  textAlign: 'center' // Alinha o texto ao centro
+  textAlign: 'center'
 };
 
 const brandNameStyle: React.CSSProperties = { 
   fontSize: '24px', 
   fontWeight: '900', 
   color: '#2563eb', 
-  marginBottom: '40px', // Espaço antes da seta
+  marginBottom: '30px', 
   textAlign: 'center'
 };
 
 const arrowWrapper: React.CSSProperties = { 
   textAlign: 'center', 
-  marginBottom: '40px' 
+  marginBottom: '30px' 
 };
 
 const arrowIcon: React.CSSProperties = { 
   fontSize: '40px', 
   color: '#262626', 
-  fontWeight: '100' // Seta mais leve, conforme design original
+  fontWeight: '100'
 };
 
 const formStyle: React.CSSProperties = { 
   display: 'flex', 
   flexDirection: 'column', 
   gap: '15px', 
-  width: '320px', 
+  width: '400px', // AUMENTADO
   maxWidth: '100%' 
 };
 
 const inputStyle: React.CSSProperties = { 
-  padding: '16px 20px', 
+  padding: '20px', // AUMENTADO
   borderRadius: '50px', 
   border: '1.5px solid #f1f5f9', 
-  fontSize: '15px', 
+  fontSize: '16px', 
   fontWeight: '600', 
   outline: 'none', 
   textAlign: 'center',
@@ -160,22 +159,21 @@ const inputStyle: React.CSSProperties = {
 };
 
 const btnStyle: React.CSSProperties = { 
-  backgroundColor: '#262626', // Preto arredondado da imagem original
+  backgroundColor: '#262626', 
   color: 'white', 
-  padding: '18px 30px', 
+  padding: '22px 30px', // AUMENTADO
   borderRadius: '50px', 
   border: 'none', 
   fontWeight: '900', 
-  fontSize: '14px', 
+  fontSize: '16px', // AUMENTADO
   cursor: 'pointer', 
   textTransform: 'uppercase',
-  boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
-  transition: '0.3s transform'
+  boxShadow: '0 10px 25px rgba(0,0,0,0.15)'
 };
 
 const successBox: React.CSSProperties = { 
-  width: '320px', 
-  padding: '15px', 
+  width: '400px', 
+  padding: '20px', 
   textAlign: 'center', 
   backgroundColor: '#f0fdf4', 
   borderRadius: '20px', 
