@@ -15,22 +15,21 @@ export default function AguardePage() {
     if (!error) {
       setEnviado(true);
     } else {
-      alert("Houve um erro ou este e-mail já está na fila. Tente novamente!");
+      alert("Erro ao cadastrar. Tente novamente!");
     }
     setLoading(false);
   };
 
   return (
     <main style={containerStyle}>
-      
-      {/* COLUNA ESQUERDA - TEXTOS E FORMULÁRIO (Aumentado) */}
       <section style={leftSection}>
         <div style={contentWrapper}>
           
-          <img src="/logo.png" alt="Logo Contrata" style={logoStyle} />
+          {/* LOGO EM ESCALA 400PX */}
+          <img src="/logo.png" alt="Logo" style={logoStyle} />
           
           <h1 style={titleStyle}>
-            FAÇA PARTE DA MAIOR PLATAFORMA DE EMPREGOS DO BRASIL PARA VOCÊ E SUA EMPRESA
+            FAÇA PARTE DA MAIOR PLATAFORMA DE EMPREGOS DO BRASIL
           </h1>
           
           <h2 style={brandNameStyle}>CONTRATA EMPREGOS</h2>
@@ -43,62 +42,55 @@ export default function AguardePage() {
             <form onSubmit={salvarFila} style={formStyle}>
               <input 
                 type="email" 
-                placeholder="Digite seu melhor e-mail" 
+                placeholder="Digite seu e-mail" 
                 style={inputStyle}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required 
               />
               <button type="submit" disabled={loading} style={btnStyle}>
-                {loading ? 'PROCESSANDO...' : 'FAÇA SEU PRÉ CADASTRO'}
+                {loading ? '...' : 'FAÇA SEU PRÉ CADASTRO'}
               </button>
             </form>
           ) : (
             <div style={successBox}>
-              <p style={{fontWeight: '900', color: '#16a34a', margin: 0}}>✓ PRÉ-CADASTRO REALIZADO!</p>
-              <p style={{fontSize: '12px', color: '#64748b', marginTop: '5px'}}>Avisaremos você em breve.</p>
+              <p style={{fontWeight: '900', color: '#16a34a', fontSize: '30px'}}>✓ REALIZADO!</p>
             </div>
           )}
         </div>
       </section>
 
-      {/* COLUNA DIREITA (Tamanho original) */}
       <section style={rightSection}></section>
-
     </main>
   );
 }
 
-// ESTILOS AJUSTADOS PARA TAMANHOS GIGANTES
 const containerStyle: React.CSSProperties = { 
   display: 'flex', 
   minHeight: '100vh', 
   width: '100%', 
-  backgroundColor: '#ffffff', 
-  fontFamily: 'sans-serif',
-  overflow: 'hidden' 
+  backgroundColor: '#fff', 
+  fontFamily: 'sans-serif'
 };
 
 const leftSection: React.CSSProperties = { 
-  flex: '1.5', // AUMENTADO PARA DAR MAIS ESPAÇO À ESQUERDA
+  flex: '2', // Dá ainda mais espaço para o conteúdo gigante
   display: 'flex', 
   flexDirection: 'column', 
   justifyContent: 'center', 
   alignItems: 'center', 
-  padding: '60px', // AUMENTADO
-  backgroundColor: '#fff' 
+  padding: '40px'
 };
 
 const rightSection: React.CSSProperties = { 
-  flex: '1', // DIMINUÍDO PROPORCIONALMENTE
+  flex: '1', 
   backgroundImage: 'url("https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2000")', 
   backgroundSize: 'cover', 
-  backgroundPosition: 'center', 
-  display: 'block' 
+  backgroundPosition: 'center'
 };
 
 const contentWrapper: React.CSSProperties = { 
-  maxWidth: '800px', // AUMENTADO SIGNIFICATIVAMENTE
+  maxWidth: '900px', 
   width: '100%',
   display: 'flex',
   flexDirection: 'column',
@@ -106,78 +98,68 @@ const contentWrapper: React.CSSProperties = {
 };
 
 const logoStyle: React.CSSProperties = { 
-  height: '220px', // AUMENTADO PARA GIGANTE
-  marginBottom: '60px', // AUMENTADO
+  height: '400px', // O QUE VOCÊ PEDIU
+  width: 'auto',
+  marginBottom: '40px', 
   objectFit: 'contain' 
 };
 
 const titleStyle: React.CSSProperties = { 
-  fontSize: '42px', // AUMENTADO SIGNIFICATIVAMENTE
-  fontWeight: '800', 
+  fontSize: '48px', 
+  fontWeight: '900', 
   color: '#262626', 
-  lineHeight: '1.2', 
+  lineHeight: '1.1', 
   marginBottom: '20px', 
   textAlign: 'center'
 };
 
 const brandNameStyle: React.CSSProperties = { 
-  fontSize: '36px', // AUMENTADO
+  fontSize: '60px', // AUMENTADO PARA > 50PX
   fontWeight: '900', 
   color: '#2563eb', 
-  marginBottom: '50px', // AUMENTADO
+  marginBottom: '40px', 
   textAlign: 'center'
 };
 
-const arrowWrapper: React.CSSProperties = { 
-  textAlign: 'center', 
-  marginBottom: '50px' 
-};
+const arrowWrapper: React.CSSProperties = { marginBottom: '40px' };
 
-const arrowIcon: React.CSSProperties = { 
-  fontSize: '60px', // AUMENTADO
-  color: '#262626', 
-  fontWeight: '100'
-};
+const arrowIcon: React.CSSProperties = { fontSize: '80px', color: '#262626' };
 
 const formStyle: React.CSSProperties = { 
   display: 'flex', 
   flexDirection: 'column', 
-  gap: '20px', 
-  width: '100%', // AUMENTADO PARA OCUPAR TODO O WRAPPER SE NECESSÁRIO
-  maxWidth: '600px' // AUMENTADO
+  gap: '25px', 
+  width: '100%',
+  maxWidth: '700px' 
 };
 
 const inputStyle: React.CSSProperties = { 
-  padding: '25px', // AUMENTADO
+  height: '100px', // O QUE VOCÊ PEDIU
+  padding: '0 30px', 
   borderRadius: '50px', 
-  border: '2px solid #f1f5f9', // MAIS GROSSO
-  fontSize: '20px', // AUMENTADO
+  border: '3px solid #f1f5f9', 
+  fontSize: '24px', 
   fontWeight: '600', 
-  outline: 'none', 
   textAlign: 'center',
-  backgroundColor: '#f8fafc',
-  color: '#1e293b'
+  backgroundColor: '#f8fafc'
 };
 
 const btnStyle: React.CSSProperties = { 
+  height: '100px', // O QUE VOCÊ PEDIU
   backgroundColor: '#262626', 
   color: 'white', 
-  padding: '28px 40px', // AUMENTADO
   borderRadius: '50px', 
   border: 'none', 
   fontWeight: '900', 
-  fontSize: '20px', // AUMENTADO
+  fontSize: '22px', 
   cursor: 'pointer', 
   textTransform: 'uppercase',
-  boxShadow: '0 15px 35px rgba(0,0,0,0.2)' // MAIS FORTE
+  boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
 };
 
 const successBox: React.CSSProperties = { 
-  width: '100%', 
-  maxWidth: '600px', 
-  padding: '25px', 
+  padding: '40px', 
   textAlign: 'center', 
   backgroundColor: '#f0fdf4', 
-  borderRadius: '20px', 
-  border: '1px solid #b9f6ca' 
+  borderRadius: '30px' 
 };
