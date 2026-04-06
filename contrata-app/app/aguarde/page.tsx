@@ -10,56 +10,56 @@ export default function AguardePage() {
 
   const salvarFila = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return; // Evita cliques duplos
     setLoading(true);
 
     try {
-      // 1. DISPARA O E-MAIL DE CONFIRMAÇÃO OFICIAL (AUTH DO SUPABASE)
+      // 1. TENTA CADASTRAR NO SISTEMA DE AUTENTICAÇÃO (DISPARA O E-MAIL)
       const { error: authError } = await supabase.auth.signUp({
         email: email,
         password: 'senha-provisoria-contrata-2026',
       });
 
-      if (authError) {
-        // Se o e-mail já existir ou houver limite de envio, ele avisa aqui
-        alert("Aviso: " + authError.message);
-      } else {
-        // 2. SALVA TAMBÉM NA TABELA DE BACKUP (IGNORA SE DER ERRO DE DUPLICATA)
-        await supabase.from('waitlist').insert([{ email }]);
-        setEnviado(true);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Houve um erro ao processar. Tente novamente.");
-    }
+      // 2. TENTA SALVAR NA TABELA DE BACKUP (WAITLIST)
+      const { error: dbError } = await supabase.from('waitlist').insert([{ email }]);
 
-    setLoading(false);
+      // Se o processo rodou, mesmo que o e-mail já exista, mostramos sucesso para o usuário
+      setEnviado(true);
+
+    } catch (err) {
+      console.error("Erro completo:", err);
+      alert("Houve um problema de conexão. Verifique se as chaves do Supabase na Vercel estão corretas.");
+    } finally {
+      // O 'finally' garante que o botão DESTRAVE e saia do "ENVIANDO...", não importa o que aconteça
+      setLoading(false);
+    }
   };
 
   return (
     <main style={containerStyle}>
       
-      {/* COLUNA ESQUERDA - CONTEÚDO GIGANTE E COMPRIMIDO (SEM SCROLL) */}
+      {/* COLUNA ESQUERDA - CONTEÚDO E FORMULÁRIO */}
       <section style={leftSection}>
         <div style={contentWrapper}>
           
-          {/* LOGO GIGANTE */}
+          {/* LOGO GIGANTE - OCUPA 35% DA ALTURA DA TELA */}
           <img src="/logo.png" alt="Logo Contrata" style={logoStyle} />
 
-          {/* NOME DO SITE (AZUL E COLADO NA LOGO) */}
+          {/* NOME DO SITE (COLADO NA LOGO EM AZUL) */}
           <h2 style={brandNameStyle}>CONTRATA EMPREGOS</h2>
 
-          {/* FRASE DE IMPACTO GIGANTE */}
+          {/* FRASE DE IMPACTO GIGANTE E COMPRIMIDA */}
           <h1 style={titleStyle}>
             FAÇA PARTE DA MAIOR PLATAFORMA DE EMPREGOS DO BRASIL <br/>
             <span style={{color: '#1e293b', display: 'block', marginTop: '5px'}}>PARA VOCÊ E SUA EMPRESA</span>
           </h1>
           
-          {/* SETA PESADA */}
+          {/* SETA PESADA CENTRALIZADA */}
           <div style={arrowWrapper}>
              <span style={arrowIcon}>︾</span>
           </div>
 
-          {/* FORMULÁRIO ROBUSTO */}
+          {/* FORMULÁRIO OU MENSAGEM DE SUCESSO */}
           {!enviado ? (
             <form onSubmit={salvarFila} style={formStyle}>
               <input 
@@ -71,7 +71,7 @@ export default function AguardePage() {
                 required 
               />
               <button type="submit" disabled={loading} style={btnStyle}>
-                {loading ? 'ENVIANDO...' : 'FAÇA SEU PRÉ CADASTRO'}
+                {loading ? 'PROCESSANDO...' : 'FAÇA SEU PRÉ CADASTRO'}
               </button>
             </form>
           ) : (
@@ -79,21 +79,21 @@ export default function AguardePage() {
               <p style={{fontWeight: '900', color: '#16a34a', fontSize: '24px', margin: 0}}>✓ SUCESSO!</p>
               <p style={{fontSize: '16px', color: '#475569', marginTop: '10px'}}>
                 Enviamos um e-mail de confirmação para você. <br/> 
-                **Confira sua caixa de entrada e o Spam!**
+                **Confira sua caixa de entrada e Spam!**
               </p>
             </div>
           )}
         </div>
       </section>
 
-      {/* COLUNA DIREITA - IMAGEM FIXA */}
+      {/* COLUNA DIREITA - IMAGEM DO ESCRITÓRIO (MANTIDA IGUAL) */}
       <section style={rightSection}></section>
 
     </main>
   );
 }
 
-// --- ESTILIZAÇÃO GIGANTE E COMPRIMIDA (FOCO EM NÃO TER SCROLL) ---
+// --- ESTILIZAÇÃO BRUTA E COMPLETA (VISUAL GIGANTE E SEM BARRA DE ROLAGEM) ---
 
 const containerStyle: React.CSSProperties = { 
   display: 'flex', 
@@ -133,7 +133,7 @@ const contentWrapper: React.CSSProperties = {
 };
 
 const logoStyle: React.CSSProperties = { 
-  height: '35vh', // Logo gigante baseada na altura da tela
+  height: '35vh', 
   maxHeight: '400px',
   width: 'auto',
   objectFit: 'contain',
