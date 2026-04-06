@@ -23,22 +23,22 @@ export default function AguardePage() {
   return (
     <main style={containerStyle}>
       
-      {/* COLUNA ESQUERDA - CONTEÚDO EM ESCALA MÁXIMA */}
+      {/* COLUNA ESQUERDA - CONTEÚDO MONUMENTAL */}
       <section style={leftSection}>
         <div style={contentWrapper}>
           
-          {/* 1. LOGO REALMENTE GIGANTE */}
-          <div style={{ marginBottom: '20px' }}>
+          {/* 1. LOGO ULTRA GIGANTE (4X MAIOR) */}
+          <div style={{ marginBottom: '10px' }}>
             <img src="/logo.png" alt="Logo Contrata" style={logoStyle} />
           </div>
 
-          {/* 2. NOME DO SITE GIGANTE E AZUL */}
+          {/* 2. NOME DO SITE GIGANTE */}
           <h2 style={brandNameStyle}>CONTRATA EMPREGOS</h2>
 
-          {/* 3. FRASE DE IMPACTO COM COMPLEMENTO */}
+          {/* 3. FRASE DE IMPACTO */}
           <h1 style={titleStyle}>
             FAÇA PARTE DA MAIOR PLATAFORMA DE EMPREGOS DO BRASIL <br/>
-            <span style={{color: '#1e293b', display: 'block', marginTop: '10px'}}>PARA VOCÊ E SUA EMPRESA</span>
+            <span style={{color: '#1e293b', display: 'block', marginTop: '15px'}}>PARA VOCÊ E SUA EMPRESA</span>
           </h1>
           
           {/* 4. SETA PESADA */}
@@ -46,7 +46,7 @@ export default function AguardePage() {
              <span style={arrowIcon}>︾</span>
           </div>
 
-          {/* 5. FORMULÁRIO GIGANTE */}
+          {/* 5. FORMULÁRIO ROBUSTO */}
           {!enviado ? (
             <form onSubmit={salvarFila} style={formStyle}>
               <input 
@@ -63,20 +63,20 @@ export default function AguardePage() {
             </form>
           ) : (
             <div style={successBox}>
-              <p style={{fontWeight: '900', color: '#16a34a', fontSize: '22px'}}>✓ PRÉ-CADASTRO REALIZADO!</p>
+              <p style={{fontWeight: '900', color: '#16a34a', fontSize: '24px'}}>✓ PRÉ-CADASTRO REALIZADO!</p>
             </div>
           )}
         </div>
       </section>
 
-      {/* COLUNA DIREITA - IMAGEM FIXA */}
+      {/* COLUNA DIREITA - IMAGEM */}
       <section style={rightSection}></section>
 
     </main>
   );
 }
 
-// ESTILIZAÇÃO EM ESCALA AMPLIADA (ULTRA GIGANTE)
+// ESTILIZAÇÃO COM LOGO EM ESCALA 4X (720px de altura)
 const containerStyle: React.CSSProperties = { 
   display: 'flex', 
   minHeight: '100vh', 
@@ -92,12 +92,13 @@ const leftSection: React.CSSProperties = {
   flexDirection: 'column', 
   justifyContent: 'center', 
   alignItems: 'center', 
-  padding: '0 5%', 
-  backgroundColor: '#fff' 
+  padding: '50px 5%', 
+  backgroundColor: '#fff',
+  overflowY: 'auto' // Permite scroll caso a logo fique maior que a tela em monitores pequenos
 };
 
 const rightSection: React.CSSProperties = { 
-  flex: '1.1', 
+  flex: '1', 
   backgroundImage: 'url("https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2000")',
   backgroundSize: 'cover', 
   backgroundPosition: 'center', 
@@ -105,7 +106,7 @@ const rightSection: React.CSSProperties = {
 };
 
 const contentWrapper: React.CSSProperties = { 
-  maxWidth: '700px', 
+  maxWidth: '900px', 
   width: '100%',
   display: 'flex',
   flexDirection: 'column',
@@ -114,22 +115,23 @@ const contentWrapper: React.CSSProperties = {
 };
 
 const logoStyle: React.CSSProperties = { 
-  height: '180px', // LOGO AUMENTADA PARA 180PX (BEM MAIOR)
+  height: '720px', // LOGO 4X MAIOR (Era 180px, agora 720px)
+  maxWidth: '100%',
   width: 'auto',
   objectFit: 'contain' 
 };
 
 const brandNameStyle: React.CSSProperties = { 
-  fontSize: '42px', // NOME GIGANTE
+  fontSize: '52px', // Aumentado para acompanhar a logo
   fontWeight: '900', 
   color: '#2563eb', 
-  marginBottom: '40px',
+  marginBottom: '30px',
   textTransform: 'uppercase',
-  letterSpacing: '2px'
+  letterSpacing: '3px'
 };
 
 const titleStyle: React.CSSProperties = { 
-  fontSize: '34px', // FRASE GIGANTE
+  fontSize: '38px', 
   fontWeight: '800', 
   color: '#262626', 
   lineHeight: '1.1', 
@@ -142,7 +144,7 @@ const arrowWrapper: React.CSSProperties = {
 };
 
 const arrowIcon: React.CSSProperties = { 
-  fontSize: '60px', // SETA GIGANTE
+  fontSize: '70px', 
   color: '#262626',
   fontWeight: 'bold'
 };
@@ -151,14 +153,14 @@ const formStyle: React.CSSProperties = {
   display: 'flex', 
   flexDirection: 'column', 
   gap: '20px', 
-  width: '420px' // FORMULÁRIO MAIS LARGO
+  width: '450px' 
 };
 
 const inputStyle: React.CSSProperties = { 
-  padding: '22px 30px', 
-  borderRadius: '60px', 
+  padding: '25px 30px', 
+  borderRadius: '80px', 
   border: '2px solid #f1f5f9', 
-  fontSize: '18px', 
+  fontSize: '20px', 
   fontWeight: '600',
   textAlign: 'center',
   backgroundColor: '#f8fafc',
@@ -169,23 +171,23 @@ const inputStyle: React.CSSProperties = {
 const btnStyle: React.CSSProperties = { 
   backgroundColor: '#262626', 
   color: 'white', 
-  padding: '24px', 
-  borderRadius: '60px', 
+  padding: '28px', 
+  borderRadius: '80px', 
   border: 'none', 
   fontWeight: '900', 
-  fontSize: '18px', 
+  fontSize: '20px', 
   cursor: 'pointer', 
   textTransform: 'uppercase',
-  boxShadow: '0 15px 35px rgba(0,0,0,0.2)',
+  boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
   transition: '0.3s transform'
 };
 
 const successBox: React.CSSProperties = { 
   width: '100%',
-  maxWidth: '420px',
-  padding: '35px', 
+  maxWidth: '450px',
+  padding: '40px', 
   textAlign: 'center', 
   backgroundColor: '#f0fdf4', 
-  borderRadius: '30px',
-  border: '2px solid #b9f6ca' 
+  borderRadius: '40px',
+  border: '3px solid #b9f6ca' 
 };
