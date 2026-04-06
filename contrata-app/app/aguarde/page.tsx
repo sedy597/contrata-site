@@ -12,18 +12,24 @@ export default function AguardePage() {
     e.preventDefault();
     setLoading(true);
 
-    // 1. DISPARA O E-MAIL DE VERIFICAÇÃO DO SUPABASE (AUTENTICAÇÃO)
-    const { error: authError } = await supabase.auth.signUp({
-      email: email,
-      password: 'senha-provisoria-contrata-2026', 
-    });
+    try {
+      // 1. DISPARA O E-MAIL DE CONFIRMAÇÃO OFICIAL (AUTH DO SUPABASE)
+      const { error: authError } = await supabase.auth.signUp({
+        email: email,
+        password: 'senha-provisoria-contrata-2026',
+      });
 
-    if (authError) {
-      alert("Aviso: " + authError.message);
-    } else {
-      // 2. SALVA TAMBÉM NA TABELA DE BACKUP (WAITLIST)
-      await supabase.from('waitlist').insert([{ email }]);
-      setEnviado(true);
+      if (authError) {
+        // Se o e-mail já existir ou houver limite de envio, ele avisa aqui
+        alert("Aviso: " + authError.message);
+      } else {
+        // 2. SALVA TAMBÉM NA TABELA DE BACKUP (IGNORA SE DER ERRO DE DUPLICATA)
+        await supabase.from('waitlist').insert([{ email }]);
+        setEnviado(true);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Houve um erro ao processar. Tente novamente.");
     }
 
     setLoading(false);
@@ -32,17 +38,17 @@ export default function AguardePage() {
   return (
     <main style={containerStyle}>
       
-      {/* COLUNA ESQUERDA - O VISUAL GIGANTE QUE O CLIENTE APROVOU */}
+      {/* COLUNA ESQUERDA - CONTEÚDO GIGANTE E COMPRIMIDO (SEM SCROLL) */}
       <section style={leftSection}>
         <div style={contentWrapper}>
           
           {/* LOGO GIGANTE */}
           <img src="/logo.png" alt="Logo Contrata" style={logoStyle} />
 
-          {/* NOME DO SITE (COLADO NA LOGO) */}
+          {/* NOME DO SITE (AZUL E COLADO NA LOGO) */}
           <h2 style={brandNameStyle}>CONTRATA EMPREGOS</h2>
 
-          {/* FRASE DE IMPACTO GIGANTE COM COMPLEMENTO */}
+          {/* FRASE DE IMPACTO GIGANTE */}
           <h1 style={titleStyle}>
             FAÇA PARTE DA MAIOR PLATAFORMA DE EMPREGOS DO BRASIL <br/>
             <span style={{color: '#1e293b', display: 'block', marginTop: '5px'}}>PARA VOCÊ E SUA EMPRESA</span>
@@ -53,7 +59,7 @@ export default function AguardePage() {
              <span style={arrowIcon}>︾</span>
           </div>
 
-          {/* FORMULÁRIO ROBUSTO SEM SCROLL */}
+          {/* FORMULÁRIO ROBUSTO */}
           {!enviado ? (
             <form onSubmit={salvarFila} style={formStyle}>
               <input 
@@ -72,22 +78,22 @@ export default function AguardePage() {
             <div style={successBox}>
               <p style={{fontWeight: '900', color: '#16a34a', fontSize: '24px', margin: 0}}>✓ SUCESSO!</p>
               <p style={{fontSize: '16px', color: '#475569', marginTop: '10px'}}>
-                Enviamos um e-mail de confirmação. <br/> 
-                Confira sua caixa de entrada!
+                Enviamos um e-mail de confirmação para você. <br/> 
+                **Confira sua caixa de entrada e o Spam!**
               </p>
             </div>
           )}
         </div>
       </section>
 
-      {/* COLUNA DIREITA - IMAGEM DO ESCRITÓRIO */}
+      {/* COLUNA DIREITA - IMAGEM FIXA */}
       <section style={rightSection}></section>
 
     </main>
   );
 }
 
-// --- ESTILIZAÇÃO COMPLETA (IGUAL AO QUE VOCÊ GOSTOU) ---
+// --- ESTILIZAÇÃO GIGANTE E COMPRIMIDA (FOCO EM NÃO TER SCROLL) ---
 
 const containerStyle: React.CSSProperties = { 
   display: 'flex', 
