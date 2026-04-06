@@ -1,4 +1,4 @@
- // @ts-nocheck
+// @ts-nocheck
 'use client';
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
@@ -11,40 +11,49 @@ export default function AguardePage() {
   const salvarFila = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.from('waitlist').insert([{ email }]);
-    if (!error) {
-      setEnviado(true);
+
+    // 1. DISPARA O E-MAIL DE VERIFICAÇÃO DO SUPABASE (AUTENTICAÇÃO)
+    const { error: authError } = await supabase.auth.signUp({
+      email: email,
+      password: 'senha-provisoria-contrata-2026', 
+    });
+
+    if (authError) {
+      alert("Aviso: " + authError.message);
     } else {
-      alert("Houve um erro ou este e-mail já está na fila.");
+      // 2. SALVA TAMBÉM NA TABELA DE BACKUP (WAITLIST)
+      await supabase.from('waitlist').insert([{ email }]);
+      setEnviado(true);
     }
+
     setLoading(false);
   };
 
   return (
     <main style={containerStyle}>
       
-      {/* COLUNA ESQUERDA - CONTEÚDO COMPRIMIDO */}
+      {/* COLUNA ESQUERDA - O VISUAL GIGANTE QUE O CLIENTE APROVOU */}
       <section style={leftSection}>
         <div style={contentWrapper}>
           
-          {/* 1. LOGO GIGANTE MAS LIMITADA À TELA */}
+          {/* LOGO GIGANTE */}
           <img src="/logo.png" alt="Logo Contrata" style={logoStyle} />
 
-          {/* 2. NOME DO SITE (BEM PRÓXIMO) */}
+          {/* NOME DO SITE (COLADO NA LOGO) */}
           <h2 style={brandNameStyle}>CONTRATA EMPREGOS</h2>
 
-          {/* 3. FRASE DE IMPACTO */}
+          {/* FRASE DE IMPACTO GIGANTE COM COMPLEMENTO */}
           <h1 style={titleStyle}>
             FAÇA PARTE DA MAIOR PLATAFORMA DE EMPREGOS DO BRASIL <br/>
-            <span style={{color: '#1e293b'}}>PARA VOCÊ E SUA EMPRESA</span>
+            <span style={{color: '#1e293b', display: 'block', marginTop: '5px'}}>PARA VOCÊ E SUA EMPRESA</span>
           </h1>
           
-          {/* 4. SETA (REDUZIDA PARA CABER) */}
+          {/* SETA PESADA */}
           <div style={arrowWrapper}>
              <span style={arrowIcon}>︾</span>
           </div>
 
-          {/* 5. FORMULÁRIO */}
+          {/* FORMULÁRIO ROBUSTO SEM SCROLL */}
           {!enviado ? (
             <form onSubmit={salvarFila} style={formStyle}>
               <input 
@@ -56,25 +65,30 @@ export default function AguardePage() {
                 required 
               />
               <button type="submit" disabled={loading} style={btnStyle}>
-                {loading ? 'PROCESSANDO...' : 'FAÇA SEU PRÉ CADASTRO'}
+                {loading ? 'ENVIANDO...' : 'FAÇA SEU PRÉ CADASTRO'}
               </button>
             </form>
           ) : (
             <div style={successBox}>
-              <p style={{fontWeight: '900', color: '#16a34a', fontSize: '20px'}}>✓ PRÉ-CADASTRO REALIZADO!</p>
+              <p style={{fontWeight: '900', color: '#16a34a', fontSize: '24px', margin: 0}}>✓ SUCESSO!</p>
+              <p style={{fontSize: '16px', color: '#475569', marginTop: '10px'}}>
+                Enviamos um e-mail de confirmação. <br/> 
+                Confira sua caixa de entrada!
+              </p>
             </div>
           )}
         </div>
       </section>
 
-      {/* COLUNA DIREITA - IMAGEM */}
+      {/* COLUNA DIREITA - IMAGEM DO ESCRITÓRIO */}
       <section style={rightSection}></section>
 
     </main>
   );
 }
 
-// ESTILIZAÇÃO SEM SCROLL (VIEWPORT FOCUSED)
+// --- ESTILIZAÇÃO COMPLETA (IGUAL AO QUE VOCÊ GOSTOU) ---
+
 const containerStyle: React.CSSProperties = { 
   display: 'flex', 
   height: '100vh', 
@@ -90,7 +104,7 @@ const leftSection: React.CSSProperties = {
   flexDirection: 'column', 
   justifyContent: 'center', 
   alignItems: 'center', 
-  padding: '20px', 
+  padding: '15px', 
   backgroundColor: '#fff'
 };
 
@@ -103,35 +117,34 @@ const rightSection: React.CSSProperties = {
 };
 
 const contentWrapper: React.CSSProperties = { 
-  height: '95%', // Ocupa quase toda a altura mas com folga
+  height: 'auto',
   width: '100%',
-  maxWidth: '800px',
+  maxWidth: '750px',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  justifyContent: 'center',
   textAlign: 'center'
 };
 
 const logoStyle: React.CSSProperties = { 
-  height: '35vh', // Altura relativa: 35% da altura da tela
+  height: '35vh', // Logo gigante baseada na altura da tela
   maxHeight: '400px',
   width: 'auto',
   objectFit: 'contain',
-  marginBottom: '5px' // Super próximo do nome
+  marginBottom: '5px' 
 };
 
 const brandNameStyle: React.CSSProperties = { 
-  fontSize: 'clamp(24px, 4vh, 48px)', // Fonte que se ajusta ao tamanho da tela
+  fontSize: 'clamp(28px, 4.5vh, 52px)', 
   fontWeight: '900', 
   color: '#2563eb', 
-  margin: '0 0 15px 0', // Margin mínima
+  margin: '0 0 10px 0', 
   textTransform: 'uppercase',
   letterSpacing: '2px'
 };
 
 const titleStyle: React.CSSProperties = { 
-  fontSize: 'clamp(18px, 3vh, 32px)',
+  fontSize: 'clamp(18px, 3.2vh, 34px)',
   fontWeight: '800', 
   color: '#262626', 
   lineHeight: '1.1', 
@@ -144,7 +157,7 @@ const arrowWrapper: React.CSSProperties = {
 };
 
 const arrowIcon: React.CSSProperties = { 
-  fontSize: '40px', 
+  fontSize: '50px', 
   color: '#262626',
   fontWeight: 'bold',
   lineHeight: '1'
@@ -153,38 +166,40 @@ const arrowIcon: React.CSSProperties = {
 const formStyle: React.CSSProperties = { 
   display: 'flex', 
   flexDirection: 'column', 
-  gap: '10px', 
+  gap: '12px', 
   width: '100%',
   maxWidth: '400px' 
 };
 
 const inputStyle: React.CSSProperties = { 
-  padding: '15px 25px', 
+  padding: '18px 25px', 
   borderRadius: '50px', 
   border: '2px solid #f1f5f9', 
-  fontSize: '16px', 
+  fontSize: '18px', 
   fontWeight: '600',
   textAlign: 'center',
   backgroundColor: '#f8fafc',
-  outline: 'none'
+  outline: 'none',
+  color: '#1e293b'
 };
 
 const btnStyle: React.CSSProperties = { 
   backgroundColor: '#262626', 
   color: 'white', 
-  padding: '18px', 
+  padding: '20px', 
   borderRadius: '50px', 
   border: 'none', 
   fontWeight: '900', 
-  fontSize: '16px', 
+  fontSize: '18px', 
   cursor: 'pointer', 
   textTransform: 'uppercase',
   boxShadow: '0 10px 20px rgba(0,0,0,0.1)'
 };
 
 const successBox: React.CSSProperties = { 
-  padding: '20px', 
+  padding: '30px', 
   backgroundColor: '#f0fdf4', 
   borderRadius: '30px',
-  border: '2px solid #b9f6ca' 
+  border: '2px solid #b9f6ca', 
+  maxWidth: '450px' 
 };
